@@ -14,3 +14,7 @@ output "databricks_workspace_url" {
   description = "Databricks workspace URL."
   value       = databricks_mws_workspaces.this.workspace_url
 }
+
+output "workspace_groups" {
+  value = local.workspace_groups
+}
