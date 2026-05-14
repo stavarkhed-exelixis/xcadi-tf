@@ -69,21 +69,6 @@ variable "devops_admins_name" {
   default = "OG_DIP_DBricks_DevOps_Admin"
 }
 
-variable "admins_name" {
-  type    = string
-  default = "Domain-Admins"
-}
-
-variable "developers_name" {
-  default = "Domain Developers"
-  type    = string
-}
-
-variable "consumers_name" {
-  default = "Domain Consumers"
-  type    = string
-}
-
 variable "cred_name" {
   description = "Prefix for resource naming"
   type        = string
