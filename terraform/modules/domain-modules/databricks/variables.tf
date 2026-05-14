@@ -54,12 +54,12 @@ variable "aws_region" {
   default     = "us-west-2"
 }
 
-variable "domain_name" {
+variable "workspace_name" {
   description = "Name for the Databricks workspace"
   type        = string
 }
 
-variable "tean_name" {
+variable "team_name" {
   description = "Name for the Databricks workspace"
   type        = string
 }
