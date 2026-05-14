@@ -59,6 +59,12 @@ variable "domain_name" {
   type        = string
 }
 
+variable "tean_name" {
+  description = "Name for the Databricks workspace"
+  type        = string
+}
+
+
 variable "compute_mode" {
   type    = string
   default = null
