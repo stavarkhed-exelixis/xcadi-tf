@@ -2,7 +2,7 @@ resource "databricks_sql_endpoint" "sql_warehouse" {
   count    = var.enable_sql_warehouse ? 1 : 0
   provider = databricks.workspace
 
-  name = "${var.env}-${var.domain_name}-dbx-sql-warehouse"
+  name = "${var.env}-${var.domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-dbx-sql-warehouse"
 
   enable_serverless_compute = false
   cluster_size              = "Small"
