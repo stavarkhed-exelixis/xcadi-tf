@@ -62,6 +62,7 @@ variable "workspace_name" {
 variable "team_name" {
   description = "Name for the Databricks workspace"
   type        = string
+  default     = ""
 }
 
 
