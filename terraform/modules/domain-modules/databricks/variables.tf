@@ -117,11 +117,6 @@ variable "env" {
   default     = "dev"
 }
 
-variable "team_name" {
-  type        = string
-  description = "(Required) The name of the team using this workspace"
-  default     = ""
-}
 
 variable "compliance_standards" {
   description = "List of compliance standards for workspace"
