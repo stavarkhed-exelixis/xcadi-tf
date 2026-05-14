@@ -90,7 +90,7 @@ variable "enable_catalog" {
 variable "metastore_id" {
   description = "Unity Catalog metastore ID used when creating the catalog"
   type        = string
-  default     = ""
+  default     = "819fd80f-024b-4d0f-8141-a136ba322991"
 }
 
 variable "catalog_name" {
