@@ -1,13 +1,13 @@
 variable "databricks_credentials_secret_name" {
   description = "Name (or ARN) of the AWS Secrets Manager secret holding Databricks credentials. The secret value must be a JSON object with keys: client_id, client_secret, account_id."
   type        = string
-  default     = "databricks/dip-test/credentials"
+  default     = "databricks/dip-dev/credentials"
 }
 
 variable "databricks_cross_account_role_arn" {
   description = "AWS IAM Role ARN for Databricks cross-account access (MWS credentials)."
   type        = string
-  default     = "arn:aws:iam::735877683719:role/exelixis-dip-test-databricks-cross-account-role"
+  default     = "arn:aws:iam::735877683719:role/exelixis-dip-dev-databricks-cross-account-role"
 }
 
 variable "prefix" {
@@ -19,7 +19,7 @@ variable "prefix" {
 variable "cross_account_role_arn" {
   description = "AWS IAM role ARN for cross-account access"
   type        = string
-  default     = "arn:aws:iam::735877683719:role/exelixis-dip-test-databricks-cross-account-role"
+  default     = "arn:aws:iam::735877683719:role/exelixis-dip-dev-databricks-cross-account-role"
 }
 
 variable "root_storage_bucket" {
@@ -87,7 +87,7 @@ variable "consumers_name" {
 variable "cred_name" {
   description = "Prefix for resource naming"
   type        = string
-  default     = "dip-secret-test"
+  default     = "dip-secret-dev"
 }
 
 variable "enable_sql_warehouse" {
@@ -129,7 +129,7 @@ variable "force_destroy" {
 variable "env" {
   description = "The environment for which this account will be used."
   type        = string
-  default     = "test"
+  default     = "dev"
 }
 
 variable "team_name" {
