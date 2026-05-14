@@ -54,7 +54,7 @@ variable "aws_region" {
   default     = "us-west-2"
 }
 
-variable "workspace_name" {
+variable "domain_name" {
   description = "Name for the Databricks workspace"
   type        = string
 }
