@@ -13,7 +13,7 @@ resource "databricks_catalog" "this" {
     databricks_external_location.root_dbx_catalog_external_location
   ]
   provider     = databricks.workspace
-  storage_root = "s3://${var.root_storage_bucket}/unity-catalog/${var.env}/${var.domain_name}/" : ""}"
+  storage_root = "s3://${var.root_storage_bucket}/unity-catalog/${var.env}/${var.domain_name}${var.team_name != "" ? "/${var.team_name}/" : ""}"
   metastore_id = var.metastore_id
   name         = "${var.env}-${var.domain_name}-catalog"
   comment      = var.catalog_comment
