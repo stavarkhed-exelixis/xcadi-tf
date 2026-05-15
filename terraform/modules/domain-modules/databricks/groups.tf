@@ -21,7 +21,7 @@ data "databricks_group" "this" {
 data "databricks_user" "this" {
   for_each  = var.workspace_users
   provider  = databricks.mws
-  user_name = each.value.user_name
+  user_name = each.value
 }
 
 resource "databricks_mws_permission_assignment" "this" {
@@ -37,7 +37,7 @@ resource "databricks_mws_permission_assignment" "users" {
   provider     = databricks.mws
   workspace_id = databricks_mws_workspaces.this.workspace_id
   principal_id = data.databricks_user.this[each.key].id
-  permissions  = each.value.workspace_permission
+  permissions  = ["USER"]
 }
 
 resource "databricks_entitlements" "this" {
