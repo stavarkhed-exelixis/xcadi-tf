@@ -13,7 +13,7 @@ variable "prefix" {
 variable "cross_account_role_arn" {
   description = "AWS IAM role ARN for cross-account access"
   type        = string
-  default     = "arn:aws:iam::441447966705:role/dev-xcadi-backend-irsa-role"
+  default     = "arn:aws:iam::735877683719:role/exelixis-dip-dev-databricks-cross-account-role"
 }
 
 variable "root_storage_bucket" {
