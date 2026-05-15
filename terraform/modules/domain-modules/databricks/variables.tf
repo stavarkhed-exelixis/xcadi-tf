@@ -143,10 +143,7 @@ variable "compliance_standards" {
 }
 
 variable "workspace_users" {
-  description = "Users to assign to the Databricks workspace"
-  type = map(object({
-    user_name            = string
-    workspace_permission = list(string)
-  }))
-  default = {}
+  description = "Set of AD usernames/emails to grant Databricks workspace USER access"
+  type        = set(string)
+  default     = []
 }
