@@ -11,5 +11,5 @@ resource "random_string" "credential_name_suffix" {
 resource "databricks_mws_credentials" "this" {
   provider         = databricks.mws
   credentials_name = "dip-dbx-${var.env}-${var.domain_name}-${random_string.credential_name_suffix.result}-credentials"
-  role_arn         = var.cross_account_role_arn
+  role_arn         = "arn:aws:iam::735877683719:role/exelixis-dip-dev-databricks-cross-account-role"
 }
