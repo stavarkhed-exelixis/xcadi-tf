@@ -18,11 +18,25 @@ data "databricks_group" "this" {
   display_name = each.value.display_name
 }
 
+data "databricks_user" "this" {
+  for_each  = var.workspace_users
+  provider  = databricks.mws
+  user_name = each.value.user_name
+}
+
 resource "databricks_mws_permission_assignment" "this" {
   for_each     = local.workspace_groups
   provider     = databricks.mws
   workspace_id = databricks_mws_workspaces.this.workspace_id
   principal_id = data.databricks_group.this[each.key].id
+  permissions  = each.value.workspace_permission
+}
+
+resource "databricks_mws_permission_assignment" "users" {
+  for_each     = var.workspace_users
+  provider     = databricks.mws
+  workspace_id = databricks_mws_workspaces.this.workspace_id
+  principal_id = data.databricks_user.this[each.key].id
   permissions  = each.value.workspace_permission
 }
 
