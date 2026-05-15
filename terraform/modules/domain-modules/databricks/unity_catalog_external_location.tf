@@ -5,7 +5,7 @@
 resource "aws_s3_object" "dbx_unity_catalog_folder_creation" {
   count   = var.enable_catalog ? 1 : 0
   bucket  = var.root_storage_bucket
-  key     = "unity-catalog/${var.env}/${var.domain_name}${var.team_name != "" ? "/${var.team_name}/" : ""}"
+  key     = "unity-catalog/${var.env}/${var.domain_name}/${var.team_name != "" ? "${var.team_name}/" : ""}"
   content = ""
 }
 
@@ -31,7 +31,7 @@ resource "databricks_external_location" "root_dbx_catalog_external_location" {
   provider = databricks.workspace
 
   name            = "${var.env}-${var.domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-uc-root-external_location"
-  url             = "s3://${var.root_storage_bucket}/unity-catalog/${var.env}/${var.domain_name}${var.team_name != "" ? "/${var.team_name}/" : ""}"
+  url             = "s3://${var.root_storage_bucket}/unity-catalog/${var.env}/${var.domain_name}/${var.team_name != "" ? "${var.team_name}/" : ""}"
   credential_name = databricks_storage_credential.dbx_root_storage_credential[0].name
   comment         = "ROOT External location for ${var.env}_${var.domain_name}${var.team_name != "" ? "_${var.team_name}" : ""} catalog"
   force_update    = true
