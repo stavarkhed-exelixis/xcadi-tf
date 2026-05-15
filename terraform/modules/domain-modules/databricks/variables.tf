@@ -141,3 +141,12 @@ variable "compliance_standards" {
     error_message = "Invalid compliance standard selected."
   }
 }
+
+variable "workspace_users" {
+  description = "Users to assign to the Databricks workspace"
+  type = map(object({
+    user_name            = string
+    workspace_permission = list(string)
+  }))
+  default = {}
+}
