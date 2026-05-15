@@ -4,12 +4,6 @@ variable "databricks_credentials_secret_name" {
   default     = "databricks/dip-dev/credentials"
 }
 
-variable "databricks_cross_account_role_arn" {
-  description = "AWS IAM Role ARN for Databricks cross-account access (MWS credentials)."
-  type        = string
-  default     = "arn:aws:iam::735877683719:role/exelixis-dip-dev-databricks-cross-account-role"
-}
-
 variable "prefix" {
   description = "Prefix for resource naming"
   type        = string
@@ -19,7 +13,7 @@ variable "prefix" {
 variable "cross_account_role_arn" {
   description = "AWS IAM role ARN for cross-account access"
   type        = string
-  default     = "arn:aws:iam::735877683719:role/exelixis-dip-dev-databricks-cross-account-role"
+  default     = "arn:aws:iam::441447966705:role/dev-xcadi-backend-irsa-role"
 }
 
 variable "root_storage_bucket" {
