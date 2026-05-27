@@ -188,19 +188,19 @@ variable "tags" {
 variable "admins_name" {
   description = "Databricks account group name for domain admins"
   type        = string
-  default     = "Domain-Admins"
+  default     = "OG_DIP_DBricks_DATABRICKS_DOMAIN_ADMINS"
 }
 
 variable "developers_name" {
   description = "Databricks account group name for domain developers"
   type        = string
-  default     = "Domain Developers"
+  default     = "OG_DIP_DBricks_DATABRICKS_DEVELOPERS"
 }
 
 variable "consumers_name" {
   description = "Databricks account group name for domain consumers"
   type        = string
-  default     = "Domain Consumers"
+  default     = "OG_DIP_DBricks_DATABRICKS_CONSUMERS"
 }
 
 variable "external_catalog_iam_role_arn" {
@@ -551,3 +551,10 @@ variable "budget_monthly_threshold_usd" {
   type        = number
   default     = 500
 }
+
+variable "create_okta_groups" {
+  description = "Create okta  groups"
+  type        = bool
+  default     = true
+}
+
