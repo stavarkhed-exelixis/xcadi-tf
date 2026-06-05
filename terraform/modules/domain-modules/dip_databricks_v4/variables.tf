@@ -32,10 +32,19 @@ variable "root_storage_bucket" {
 }
 
 variable "account_number" {
-  description = "Optional AWS account number to target for workspace/catalog creation. When null, the module falls back to the legacy environment_account_ids mapping."
-  type        = string
-  default     = null
-  nullable    = true
+  description = "AWS account number to target for workspace/catalog creation (UI-friendly dropdown). Select one: 441447966705 (dev), 154916814622 (test), 754095075756 (prod)."
+  type        = list(string)
+  default     = ["441447966705"]
+
+  validation {
+    condition     = length(var.account_number) == 1
+    error_message = "account_number must contain exactly one value."
+  }
+
+  validation {
+    condition     = contains(["441447966705", "154916814622", "754095075756"], one(var.account_number))
+    error_message = "account_number must be one of: 441447966705 (dev), 154916814622 (test), 754095075756 (prod)."
+  }
 }
 
 variable "vpc_id" {
