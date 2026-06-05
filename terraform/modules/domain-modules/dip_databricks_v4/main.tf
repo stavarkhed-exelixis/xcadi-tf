@@ -37,8 +37,8 @@ data "aws_secretsmanager_secret_version" "databricks" {
 
 locals {
   selected_env                                 = one(var.env)
-  selected_account_number                      = trimspace(coalesce(var.account_number, "")) != "" ? trimspace(var.account_number) : var.environment_account_ids[local.selected_env]
-  selected_account_supported_envs              = trimspace(coalesce(var.account_number, "")) != "" ? lookup(var.account_number_supported_environments, local.selected_account_number, []) : [local.selected_env]
+  selected_account_number                      = one(var.account_number)
+  selected_account_supported_envs              = lookup(var.account_number_supported_environments, local.selected_account_number, [local.selected_env])
   env_account_id                               = local.selected_account_number
   effective_databricks_credentials_secret_name = coalesce(var.databricks_credentials_secret_name, "databricks/dip-${local.selected_env}/credentials")
   effective_cross_account_role_arn             = coalesce(var.cross_account_role_arn, "arn:aws:iam::${var.cross_account_role_account_id}:role/exelixis-dip-${local.selected_env}-databricks-cross-account-role")
