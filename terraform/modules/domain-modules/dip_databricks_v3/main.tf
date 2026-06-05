@@ -1,11 +1,6 @@
 # provider.tf
 
 terraform {
-  backend "s3" {
-    # Supply bucket and key per environment via -backend-config files.
-    # Examples in this module: backend-dev.hcl, backend-test.hcl, backend-uat.hcl, backend-prod.hcl
-    region = "us-west-2"
-  }
   required_providers {
     databricks = {
       source  = "databricks/databricks"
