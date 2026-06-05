@@ -34,7 +34,7 @@ variable "root_storage_bucket" {
 variable "account_number" {
   description = "AWS account number to target for workspace/catalog creation (UI-friendly dropdown). Select one: 441447966705 (dev), 154916814622 (test), 754095075756 (prod)."
   type        = list(string)
-  default     = ["441447966705"]
+  default     = ["754095075756"]
 
   validation {
     condition     = length(var.account_number) == 1
