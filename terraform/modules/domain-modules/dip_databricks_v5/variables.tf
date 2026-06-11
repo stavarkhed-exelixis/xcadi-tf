@@ -5,13 +5,14 @@ variable "databricks_credentials_secret_name" {
   nullable    = true
 }
 
-variable "databricks_credentials_secret_name_by_account_number" {
-  description = "Databricks credentials secret name/ARN by target AWS account number. Used when databricks_credentials_secret_name is not set."
-  type        = map(string)
-  default = {
-    "441447966705" = "databricks/dip-dev/credentials"
-    "154916814622" = "databricks/dip-test/credentials"
-    "754095075756" = "databricks/dip-prod/credentials"
+variable "databricks_credentials_env" {
+  description = "Environment segment used for default Databricks credentials secret name when databricks_credentials_secret_name is not set."
+  type        = string
+  default     = "prod"
+
+  validation {
+    condition     = contains(["dev", "test", "uat", "prod"], var.databricks_credentials_env)
+    error_message = "databricks_credentials_env must be one of: dev, test, uat, prod."
   }
 }
 
@@ -54,6 +55,34 @@ variable "account_number" {
   validation {
     condition     = contains(["441447966705", "154916814622", "754095075756"], one(var.account_number))
     error_message = "account_number must be one of: 441447966705 (dev), 154916814622 (test), 754095075756 (prod)."
+  }
+}
+
+variable "execution_account_number" {
+  description = "AWS account number where Terraform is executed (source account). When account_number matches this value, module skips assume-role."
+  type        = string
+  default     = "754095075756"
+
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.execution_account_number))
+    error_message = "execution_account_number must be a valid 12-digit AWS account number."
+  }
+}
+
+variable "backend_irsa_role_name_by_account" {
+  description = "Target backend IRSA role name by AWS account number for cross-account assume-role. UAT can reuse test role name in its account mapping."
+  type        = map(string)
+  default = {
+    "441447966705" = "dev-xcadi-backend-irsa-role"
+    "154916814622" = "test-xcadi-backend-irsa-role"
+    "754095075756" = "prod-xcadi-backend-irsa-role"
+  }
+
+  validation {
+    condition = alltrue([
+      for role_name in values(var.backend_irsa_role_name_by_account) : trimspace(role_name) != ""
+    ])
+    error_message = "backend_irsa_role_name_by_account values must be non-empty role names."
   }
 }
 
@@ -177,11 +206,19 @@ variable "environment_account_ids" {
 }
 
 variable "account_number_supported_environments" {
-  description = "Allowed environment values by target AWS account number. Use this to model accounts like prod hosting dev/test/uat/prod and test hosting only test/uat."
+  description = "Allowed environment values by target AWS account number. Defaults: dev account -> dev only, test account -> test/uat, prod account -> dev/test/uat/prod."
   type        = map(list(string))
   default = {
+    "441447966705" = ["dev"]
     "754095075756" = ["dev", "test", "uat", "prod"]
     "154916814622" = ["test", "uat"]
+  }
+
+  validation {
+    condition = alltrue([
+      for account in ["441447966705", "154916814622", "754095075756"] : contains(keys(var.account_number_supported_environments), account)
+    ])
+    error_message = "account_number_supported_environments must define all supported account numbers: 441447966705, 154916814622, 754095075756."
   }
 
   validation {
