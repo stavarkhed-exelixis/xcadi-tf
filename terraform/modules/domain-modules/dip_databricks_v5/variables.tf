@@ -200,7 +200,7 @@ variable "devops_admins_name" {
 
 variable "enable_sql_warehouse" {
   type        = bool
-  default     = true
+  default     = false
   description = "enable_sql_warehouse"
 }
 
