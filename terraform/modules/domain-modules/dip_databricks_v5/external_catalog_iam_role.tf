@@ -2,7 +2,7 @@ locals {
   create_external_catalog_iam_role = var.enable_external_catalog_iam_role && trimspace(var.unity_catalog_role_arn) != ""
   ext_catalog_role_name            = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-${var.external_catalog_iam_role_name_suffix}"
 
-  ext_catalog_single_prefix = var.external_catalog_is_custom_path && trimspace(var.external_catalog_custom_bucket_path) != "" ? var.external_catalog_custom_bucket_path : "${local.normalized_domain_name}${var.team_name != "" ? "/${var.team_name}" : ""}"
+  ext_catalog_single_prefix = trimspace(var.external_catalog_custom_bucket_path) != "" ? trim(var.external_catalog_custom_bucket_path, "/") : "${local.normalized_domain_name}${var.team_name != "" ? "/${var.team_name}" : ""}"
 
   ext_catalog_effective_prefixes = distinct(
     concat(
@@ -82,7 +82,7 @@ resource "aws_iam_role" "dbx_ext_catalog_role" {
     ]
   })
 
-  tags = var.tags
+  tags = local.effective_tags
 }
 
 resource "aws_iam_role_policy" "dbx_external_catalog_access" {

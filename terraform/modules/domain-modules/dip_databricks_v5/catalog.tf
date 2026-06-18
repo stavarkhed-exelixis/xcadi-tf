@@ -33,22 +33,22 @@ resource "databricks_grants" "catalog_access" {
   catalog = databricks_catalog.this[0].name
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES", "MANAGE", "EXTERNAL_USE_SCHEMA"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_admins"].display_name
+    principal  = local.workspace_group_display_names["domain_admins"]
     privileges = ["MANAGE", "MODIFY", "USE_SCHEMA", "CREATE_SCHEMA", "USE_CATALOG", "SELECT", "CREATE_TABLE", "CREATE_FUNCTION", "CREATE_MATERIALIZED_VIEW", "CREATE_VOLUME", "APPLY_TAG"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_developers"].display_name
+    principal  = local.workspace_group_display_names["domain_developers"]
     privileges = local.selected_env == "dev" ? ["MODIFY", "USE_SCHEMA", "USE_CATALOG", "SELECT", "CREATE_TABLE", "CREATE_FUNCTION", "CREATE_MATERIALIZED_VIEW", "CREATE_VOLUME", "APPLY_TAG"] : ["MODIFY", "USE_SCHEMA", "USE_CATALOG", "SELECT", "APPLY_TAG"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_consumers"].display_name
+    principal  = local.workspace_group_display_names["domain_consumers"]
     privileges = ["USE_CATALOG", "USE_SCHEMA", "SELECT"]
   }
 
@@ -58,5 +58,11 @@ resource "databricks_grants" "catalog_access" {
       principal  = databricks_service_principal.svc_git[0].application_id
       privileges = ["ALL_PRIVILEGES", "MANAGE", "EXTERNAL_USE_SCHEMA", "MODIFY", "USE_SCHEMA", "CREATE_SCHEMA", "USE_CATALOG", "SELECT", "CREATE_TABLE", "CREATE_FUNCTION", "CREATE_MATERIALIZED_VIEW", "CREATE_VOLUME"]
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      grant
+    ]
   }
 }
