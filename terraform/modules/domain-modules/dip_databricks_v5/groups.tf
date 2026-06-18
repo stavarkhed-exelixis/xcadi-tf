@@ -40,6 +40,14 @@ locals {
   groups_with_entitlements = {
     for k, v in local.workspace_groups : k => v if v.entitlements != null
   }
+
+  workspace_group_ids = {
+    for key, group in local.workspace_groups : key => data.databricks_group.this[key].id
+  }
+
+  workspace_group_display_names = {
+    for key, group in local.workspace_groups : key => data.databricks_group.this[key].display_name
+  }
 }
 
 data "databricks_group" "this" {
@@ -58,7 +66,7 @@ resource "databricks_mws_permission_assignment" "this" {
   for_each     = local.workspace_groups
   provider     = databricks.mws
   workspace_id = databricks_mws_workspaces.this.workspace_id
-  principal_id = data.databricks_group.this[each.key].id
+  principal_id = local.workspace_group_ids[each.key]
   permissions  = each.value.workspace_permission
 }
 
@@ -76,7 +84,7 @@ resource "databricks_entitlements" "this" {
 
   depends_on = [databricks_mws_permission_assignment.this]
 
-  group_id                   = data.databricks_group.this[each.key].id
+  group_id                   = local.workspace_group_ids[each.key]
   allow_cluster_create       = each.value.entitlements.allow_cluster_create
   allow_instance_pool_create = each.value.entitlements.allow_instance_pool_create
   databricks_sql_access      = each.value.entitlements.databricks_sql_access

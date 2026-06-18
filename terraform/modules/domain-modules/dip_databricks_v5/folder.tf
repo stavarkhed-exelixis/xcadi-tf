@@ -10,12 +10,12 @@ resource "databricks_permissions" "folder_permission" {
   directory_path = databricks_directory.domain_folder[0].path
 
   access_control {
-    group_name       = data.databricks_group.this["domain_admins"].display_name
+    group_name       = local.workspace_group_display_names["domain_admins"]
     permission_level = "CAN_MANAGE"
   }
 
   access_control {
-    group_name       = data.databricks_group.this["domain_developers"].display_name
+    group_name       = local.workspace_group_display_names["domain_developers"]
     permission_level = "CAN_RUN"
   }
 

@@ -60,17 +60,17 @@ resource "databricks_grants" "dbx_admins_service_creds_grants" {
   credential = databricks_credential.dbx_service_credential[0].id
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_admins"].display_name
+    principal  = local.workspace_group_display_names["domain_admins"]
     privileges = ["ACCESS"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_developers"].display_name
+    principal  = local.workspace_group_display_names["domain_developers"]
     privileges = ["ACCESS"]
   }
 }
@@ -98,17 +98,17 @@ resource "databricks_grants" "raw_ext_location_grants" {
   external_location = databricks_external_location.raw_dbx_external_location[0].name
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES", "MANAGE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_admins"].display_name
+    principal  = local.workspace_group_display_names["domain_admins"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_developers"].display_name
+    principal  = local.workspace_group_display_names["domain_developers"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE"]
   }
 }
@@ -137,17 +137,17 @@ resource "databricks_grants" "additional_raw_ext_location_grants" {
   external_location = each.value.name
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES", "MANAGE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_admins"].display_name
+    principal  = local.workspace_group_display_names["domain_admins"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_developers"].display_name
+    principal  = local.workspace_group_display_names["domain_developers"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE"]
   }
 }
@@ -175,17 +175,17 @@ resource "databricks_grants" "staging_ext_location_grants" {
   external_location = databricks_external_location.staging_dbx_external_location[0].name
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES", "MANAGE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_admins"].display_name
+    principal  = local.workspace_group_display_names["domain_admins"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_developers"].display_name
+    principal  = local.workspace_group_display_names["domain_developers"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE"]
   }
 }
@@ -214,17 +214,17 @@ resource "databricks_grants" "additional_staging_ext_location_grants" {
   external_location = each.value.name
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES", "MANAGE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_admins"].display_name
+    principal  = local.workspace_group_display_names["domain_admins"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_developers"].display_name
+    principal  = local.workspace_group_display_names["domain_developers"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE"]
   }
 }
@@ -252,17 +252,17 @@ resource "databricks_grants" "analytics_ext_location_grants" {
   external_location = databricks_external_location.analytics_dbx_external_location[0].name
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES", "MANAGE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_admins"].display_name
+    principal  = local.workspace_group_display_names["domain_admins"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_developers"].display_name
+    principal  = local.workspace_group_display_names["domain_developers"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE"]
   }
 }
@@ -291,17 +291,17 @@ resource "databricks_grants" "additional_analytics_ext_location_grants" {
   external_location = each.value.name
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES", "MANAGE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_admins"].display_name
+    principal  = local.workspace_group_display_names["domain_admins"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE", "CREATE_EXTERNAL_TABLE"]
   }
 
   grant {
-    principal  = data.databricks_group.this["domain_developers"].display_name
+    principal  = local.workspace_group_display_names["domain_developers"]
     privileges = ["READ_FILES", "WRITE_FILES", "BROWSE"]
   }
 }

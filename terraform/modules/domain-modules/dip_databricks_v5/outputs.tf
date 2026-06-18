@@ -61,8 +61,13 @@ output "databricks_workspace_name" {
 }
 
 output "selected_account_number" {
-  description = "Resolved AWS account number used for workspace/catalog and default bucket selection."
+  description = "Resolved AWS account number for the selected aws_account label."
   value       = local.selected_account_number
+}
+
+output "selected_aws_account_label" {
+  description = "Friendly AWS account label selected by the user (e.g. clearlake-prod, clearlake-test, clearlake-dev)."
+  value       = local.selected_aws_account_label
 }
 
 output "target_backend_irsa_role_arn" {
@@ -93,6 +98,18 @@ output "external_catalog_iam_role_arn" {
 output "cluster_name" {
   description = "Primary Databricks cluster name when created by this module."
   value       = try(databricks_cluster.Default_Cluster[0].cluster_name, null)
+}
+
+output "workspace_security_group_id" {
+  description = "Security group attached to Databricks MWS network (used by workspace/cluster networking)."
+  value = var.enable_workspace_security_group ? (
+    local.create_sg_in_databricks_account ? try(aws_security_group.databricks_in_databricks_account[0].id, null) : try(aws_security_group.databricks[0].id, null)
+  ) : null
+}
+
+output "workspace_security_group_account_path" {
+  description = "Where workspace SG is created: databricks_account_provider or target_account_provider."
+  value       = var.enable_workspace_security_group ? (local.create_sg_in_databricks_account ? "databricks_account_provider" : "target_account_provider") : "disabled"
 }
 
 output "cluster_policy_name" {

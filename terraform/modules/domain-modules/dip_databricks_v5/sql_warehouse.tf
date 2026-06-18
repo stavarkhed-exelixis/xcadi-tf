@@ -20,6 +20,19 @@ resource "databricks_sql_endpoint" "sql_warehouse" {
 
   enable_photon  = true
   warehouse_type = "PRO"
+
+  dynamic "tags" {
+    for_each = length(local.effective_tags) > 0 ? [1] : []
+    content {
+      dynamic "custom_tags" {
+        for_each = local.effective_tags
+        content {
+          key   = custom_tags.key
+          value = custom_tags.value
+        }
+      }
+    }
+  }
 }
 
 resource "databricks_permissions" "sql_warehouse_permissions" {
@@ -29,25 +42,73 @@ resource "databricks_permissions" "sql_warehouse_permissions" {
   sql_endpoint_id = local.create_sql_warehouse ? databricks_sql_endpoint.sql_warehouse[0].id : local.existing_sql_warehouse_id
 
   access_control {
-    group_name       = data.databricks_group.this["domain_admins"].display_name
+    group_name       = local.workspace_group_display_names["domain_admins"]
     permission_level = "CAN_MANAGE"
   }
 
   access_control {
-    group_name       = data.databricks_group.this["domain_developers"].display_name
+    group_name       = local.workspace_group_display_names["domain_developers"]
     permission_level = "CAN_USE"
   }
 
   access_control {
-    group_name       = data.databricks_group.this["domain_consumers"].display_name
+    group_name       = local.workspace_group_display_names["domain_consumers"]
     permission_level = "CAN_USE"
   }
 
   dynamic "access_control" {
-    for_each = var.git_integration ? [1] : []
+    for_each = var.git_integration ? [databricks_service_principal.svc_git[0].application_id] : []
     content {
-      service_principal_name = databricks_service_principal.svc_git[0].application_id
-      permission_level       = "CAN_MANAGE"
+      service_principal_name = access_control.value
+      permission_level       = "CAN_USE"
+    }
+  }
+
+  dynamic "access_control" {
+    for_each = var.atlan_integration ? [databricks_service_principal.svc_atlan[0].application_id] : []
+    content {
+      service_principal_name = access_control.value
+      permission_level       = "CAN_USE"
+    }
+  }
+
+  dynamic "access_control" {
+    for_each = var.dbt_integration ? [databricks_service_principal.svc_dbt[0].application_id] : []
+    content {
+      service_principal_name = access_control.value
+      permission_level       = "CAN_USE"
+    }
+  }
+
+  dynamic "access_control" {
+    for_each = var.spotfire_integration ? [databricks_service_principal.svc_spotfire[0].application_id] : []
+    content {
+      service_principal_name = access_control.value
+      permission_level       = "CAN_USE"
+    }
+  }
+
+  dynamic "access_control" {
+    for_each = var.tableau_integration ? [databricks_service_principal.svc_tableau[0].application_id] : []
+    content {
+      service_principal_name = access_control.value
+      permission_level       = "CAN_USE"
+    }
+  }
+
+  dynamic "access_control" {
+    for_each = var.posit_integration ? [databricks_service_principal.svc_posit[0].application_id] : []
+    content {
+      service_principal_name = access_control.value
+      permission_level       = "CAN_USE"
+    }
+  }
+
+  dynamic "access_control" {
+    for_each = var.sas_integration ? [databricks_service_principal.svc_sas[0].application_id] : []
+    content {
+      service_principal_name = access_control.value
+      permission_level       = "CAN_USE"
     }
   }
 }

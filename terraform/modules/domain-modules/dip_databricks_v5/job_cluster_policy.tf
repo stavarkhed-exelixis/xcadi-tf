@@ -77,7 +77,7 @@ resource "databricks_permissions" "policy_use" {
   cluster_policy_id = databricks_cluster_policy.job_cluster_policy[0].id
 
   access_control {
-    group_name       = data.databricks_group.this["domain_admins"].display_name
+    group_name       = local.workspace_group_display_names["domain_admins"]
     permission_level = "CAN_USE"
   }
 

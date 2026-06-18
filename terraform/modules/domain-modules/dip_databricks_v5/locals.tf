@@ -3,6 +3,7 @@ locals {
   # Domain
   # ------------------------------------------------------------------
   normalized_domain_name = lower(trimspace(var.domain_name))
+  normalized_subdomain_name = lower(trimspace(var.team_name))
 
   # ------------------------------------------------------------------
   # Git / federation
@@ -37,9 +38,11 @@ locals {
   # ------------------------------------------------------------------
   team_suffix = var.team_name != "" ? "-${var.team_name}" : ""
 
-  # Default prefix: "<domain>/<team>" when team is set, else just "<domain>"
+  # Default prefix: custom path when provided, otherwise "<domain>/<team>" (or "<domain>")
   default_external_location_prefix = (
-    var.team_name != "" ? "${local.normalized_domain_name}/${var.team_name}" : local.normalized_domain_name
+    trimspace(var.external_catalog_custom_bucket_path) != "" ? trim(var.external_catalog_custom_bucket_path, "/") : (
+      var.team_name != "" ? "${local.normalized_domain_name}/${var.team_name}" : local.normalized_domain_name
+    )
   )
 
   # Strip blank entries and leading/trailing slashes from caller-supplied prefixes

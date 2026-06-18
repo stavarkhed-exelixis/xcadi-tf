@@ -8,11 +8,29 @@ variable "databricks_credentials_secret_name" {
 variable "databricks_credentials_env" {
   description = "Environment segment used for default Databricks credentials secret name when databricks_credentials_secret_name is not set."
   type        = string
-  default     = "prod"
+  default     = null
+  nullable    = true
 
   validation {
-    condition     = contains(["dev", "test", "uat", "prod"], var.databricks_credentials_env)
+    condition     = var.databricks_credentials_env == null ? true : contains(["dev", "test", "uat", "prod"], var.databricks_credentials_env)
     error_message = "databricks_credentials_env must be one of: dev, test, uat, prod."
+  }
+}
+
+variable "databricks_credentials_env_by_aws_account" {
+  description = "Default Databricks credentials environment keyed by aws_account label. Used when databricks_credentials_env is null."
+  type        = map(string)
+  default = {
+    "clearlake-prod" = "prod"
+    "clearlake-test" = "test"
+    "clearlake-dev"  = "dev"
+  }
+
+  validation {
+    condition = alltrue([
+      for env_name in values(var.databricks_credentials_env_by_aws_account) : contains(["dev", "test", "uat", "prod"], env_name)
+    ])
+    error_message = "databricks_credentials_env_by_aws_account values must be one of: dev, test, uat, prod."
   }
 }
 
@@ -42,24 +60,41 @@ variable "root_storage_bucket" {
   nullable    = true
 }
 
-variable "account_number" {
-  description = "AWS account number to target for workspace/catalog creation (UI-friendly dropdown). Select one: 441447966705 (dev), 154916814622 (test), 754095075756 (prod)."
+variable "aws_account" {
+  description = "Target AWS account label for workspace/catalog creation (UI-friendly dropdown). Allowed values: clearlake-prod, clearlake-test, clearlake-dev."
   type        = list(string)
-  default     = ["754095075756"]
+  default     = ["clearlake-prod"]
 
   validation {
-    condition     = length(var.account_number) == 1
-    error_message = "account_number must contain exactly one value."
+    condition     = length(var.aws_account) == 1
+    error_message = "aws_account must contain exactly one value."
   }
 
   validation {
-    condition     = contains(["441447966705", "154916814622", "754095075756"], one(var.account_number))
-    error_message = "account_number must be one of: 441447966705 (dev), 154916814622 (test), 754095075756 (prod)."
+    condition     = contains(["clearlake-prod", "clearlake-test", "clearlake-dev"], one(var.aws_account))
+    error_message = "aws_account must be one of: clearlake-prod, clearlake-test, clearlake-dev."
+  }
+}
+
+variable "aws_account_number_map" {
+  description = "Mapping of friendly AWS account labels to real 12-digit AWS account numbers."
+  type        = map(string)
+  default = {
+    "clearlake-prod" = "754095075756"
+    "clearlake-test" = "154916814622"
+    "clearlake-dev"  = "441447966705"
+  }
+
+  validation {
+    condition = alltrue([
+      for account_num in values(var.aws_account_number_map) : can(regex("^[0-9]{12}$", account_num))
+    ])
+    error_message = "aws_account_number_map values must be valid 12-digit AWS account numbers."
   }
 }
 
 variable "execution_account_number" {
-  description = "AWS account number where Terraform is executed (source account). When account_number matches this value, module skips assume-role."
+  description = "AWS account number where Terraform is executed (source account). When resolved account_number matches this value, module skips assume-role. Defaults to clearlake-prod account."
   type        = string
   default     = "754095075756"
 
@@ -70,7 +105,7 @@ variable "execution_account_number" {
 }
 
 variable "backend_irsa_role_name_by_account" {
-  description = "Target backend IRSA role name by AWS account number for cross-account assume-role. UAT can reuse test role name in its account mapping."
+  description = "Target backend IRSA role name keyed by AWS account number for cross-account assume-role."
   type        = map(string)
   default = {
     "441447966705" = "dev-xcadi-backend-irsa-role"
@@ -106,6 +141,41 @@ variable "security_group_ids" {
   ]
 }
 
+variable "enable_workspace_security_group" {
+  description = "Create and attach a module-managed security group for Databricks workspace networking."
+  type        = bool
+  default     = true
+}
+
+variable "create_workspace_security_group_in_databricks_account" {
+  description = "When true, create the module-managed workspace security group in the Databricks account (cross_account_role_account_id)."
+  type        = bool
+  default     = true
+}
+
+variable "databricks_account_assume_role_arn" {
+  description = "Optional IAM role ARN to assume when creating SG resources in Databricks account. Required when Databricks account differs from execution account and direct credentials cannot access it."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "vpc_cidr" {
+  description = "CIDR blocks allowed for VPC-wide ingress to the module-managed Databricks security group."
+  type        = list(string)
+  default     = ["10.98.200.0/22"]
+}
+
+variable "workspace_prefix_list_ids" {
+  description = "Optional prefix list IDs allowed ingress to the module-managed Databricks security group."
+  type        = list(string)
+  default = [
+    "pl-0e3949231454f3679",
+    "pl-04a3dbacad5e58717",
+    "pl-0d97e7f6ef8f25ef9"
+  ]
+}
+
 variable "aws_region" {
   description = "AWS region for the workspace"
   type        = string
@@ -130,7 +200,7 @@ variable "devops_admins_name" {
 
 variable "enable_sql_warehouse" {
   type        = bool
-  default     = false
+  default     = true
   description = "enable_sql_warehouse"
 }
 
@@ -187,38 +257,20 @@ variable "env" {
   }
 }
 
-variable "environment_account_ids" {
-  description = "Legacy AWS account IDs by environment. Used only when account_number is not supplied."
-  type        = map(string)
-  default = {
-    dev  = "441447966705"
-    test = "154916814622"
-    uat  = "154916814622"
-    prod = "754095075756"
-  }
-
-  validation {
-    condition = alltrue([
-      for k in ["dev", "test", "uat", "prod"] : contains(keys(var.environment_account_ids), k)
-    ])
-    error_message = "environment_account_ids must include keys for dev, test, uat, and prod."
-  }
-}
-
 variable "account_number_supported_environments" {
-  description = "Allowed environment values by target AWS account number. Defaults: dev account -> dev only, test account -> test/uat, prod account -> dev/test/uat/prod."
+  description = "Allowed environment values keyed by friendly AWS account label (clearlake-prod/clearlake-test/clearlake-dev)."
   type        = map(list(string))
   default = {
-    "441447966705" = ["dev"]
-    "754095075756" = ["dev", "test", "uat", "prod"]
-    "154916814622" = ["test", "uat"]
+    "clearlake-dev"  = ["dev"]
+    "clearlake-prod" = ["dev", "test", "uat", "prod"]
+    "clearlake-test" = ["test", "uat"]
   }
 
   validation {
     condition = alltrue([
-      for account in ["441447966705", "154916814622", "754095075756"] : contains(keys(var.account_number_supported_environments), account)
+      for label in ["clearlake-prod", "clearlake-test", "clearlake-dev"] : contains(keys(var.account_number_supported_environments), label)
     ])
-    error_message = "account_number_supported_environments must define all supported account numbers: 441447966705, 154916814622, 754095075756."
+    error_message = "account_number_supported_environments must define keys for: clearlake-prod, clearlake-test, clearlake-dev."
   }
 
   validation {
@@ -542,7 +594,7 @@ variable "enable_default_cluster" {
 variable "enable_job_cluster_policy" {
   description = "Create job cluster policy"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_token_usage_permissions" {
@@ -651,7 +703,7 @@ variable "additional_maven_libraries" {
 variable "enable_workspace_folder" {
   description = "Create workspace folder and set folder-level permissions"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_external_locations" {
@@ -682,4 +734,86 @@ variable "create_okta_groups" {
   description = "Create okta  groups"
   type        = bool
   default     = true
+}
+
+variable "okta_devops_admins_name" {
+  description = "Existing Okta-synced Databricks group name for DevOps admins (used when create_okta_groups=true)."
+  type        = string
+  default     = ""
+}
+
+variable "okta_admins_name" {
+  description = "Existing Okta-synced Databricks group name for domain admins (used when create_okta_groups=true)."
+  type        = string
+  default     = ""
+}
+
+variable "okta_developers_name" {
+  description = "Existing Okta-synced Databricks group name for domain developers (used when create_okta_groups=true)."
+  type        = string
+  default     = ""
+}
+
+variable "okta_consumers_name" {
+  description = "Existing Okta-synced Databricks group name for domain consumers (used when create_okta_groups=true)."
+  type        = string
+  default     = ""
+}
+
+variable "allowed_ip_addresses" {
+  description = "Repository names within the org"
+  type        = list(string)
+  default = [
+    "65.209.203.253/32",
+    "65.209.203.228/32",
+
+    # Additional New Zscaler Exelixis IPs shared by Param
+    "54.203.202.128",
+    "44.255.234.127",
+    "35.170.16.17",
+    "54.80.27.113",
+    "65.209.203.253", #Old IP, we still need it.
+
+    #posit IPs (EKS hosted)
+    #clearlake dev eks
+    "54.190.115.140",
+    "54.186.223.75",
+    "44.236.33.2",
+    #clearlake test eks  
+    "44.230.29.174",
+    #clearlake prod eks and Self hosted github runner NAT gateway IPs
+    "44.226.245.197",
+
+    #Tableau IPs
+    "100.21.82.237",    #PRODTABLEAUSER
+    "44.233.200.109",   #tbswinprd02 and tbswinprd03
+    "52.37.162.125",    #tbswinval01 and Spotfire VAL (gxp-tst) (AP1, AP2, WB1, WB2)
+    "44.228.70.8",      #tbswindev01
+    "155.226.128.0/21", #Tableau cloud us-west-2 (IP reference document: https://help.tableau.com/current/pro/desktop/en-us/publish_tableau_online_ip_authorization.htm)
+
+    #Spotfire IPs
+    #Spotfire DEV (gxp-dev)
+    "54.149.21.105", #AP1, AP2, WB1, WB2
+
+    #Spotfire PRD (gxp-prd)
+    "44.229.237.209", #AP1, AP2, WB1, WB2
+
+    #SAS IPs
+    "52.89.126.153",  #saslxdev02
+    "44.232.235.148", #saslxval02
+    "18.236.35.220",  #saslxprd02
+
+    #"52.11.164.200",
+    #"135.232.177.183", #Github runner
+
+    "34.214.50.116", #Databricks NAT gateway IP address
+
+    "35.160.252.116" #Atlantis Egress IP
+  ]
+}
+
+variable "enable_esm" {
+  description = "Enable Databricks Enhanced Security Monitoring for this workspace."
+  type        = bool
+  default     = false
 }

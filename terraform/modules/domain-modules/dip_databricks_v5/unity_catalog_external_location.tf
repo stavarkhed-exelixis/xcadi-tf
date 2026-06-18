@@ -47,7 +47,7 @@ resource "databricks_grants" "uc_root_ext_location_grants" {
   external_location = databricks_external_location.root_dbx_catalog_external_location[0].name
 
   grant {
-    principal  = data.databricks_group.this["devops_admins"].display_name
+    principal  = local.workspace_group_display_names["devops_admins"]
     privileges = ["ALL_PRIVILEGES", "MANAGE", "CREATE_EXTERNAL_TABLE", "CREATE_MANAGED_STORAGE"]
   }
 }
