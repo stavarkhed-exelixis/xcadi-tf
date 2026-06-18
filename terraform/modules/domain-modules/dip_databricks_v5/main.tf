@@ -28,7 +28,7 @@ provider "aws" {
   dynamic "assume_role" {
     for_each = local.use_assume_role_for_target ? [1] : []
     content {
-      role_arn     = local.target_backend_irsa_role_arn
+      role_arn     = "arn:aws:iam::441447966705:role/${local.selected_env}-xcadi-backend-irsa-role"
       session_name = "xcadi-dbx-${local.selected_env}"
     }
   }
