@@ -39,7 +39,7 @@ provider "aws" {
 #   { "client_id": "...", "client_secret": "...", "account_id": "..." }
 data "aws_secretsmanager_secret_version" "databricks" {
   provider  = aws.prod
-  secret_id = local.effective_databricks_credentials_secret_name
+  secret_id = "databricks/dip-dev/credentials"
 }
 
 locals {
