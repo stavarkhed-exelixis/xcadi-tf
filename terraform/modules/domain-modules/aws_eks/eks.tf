@@ -7,7 +7,7 @@ module "alb_controller_irsa_role_v2" {
   # Pinned to the same commit as registry version 5.52.2. Uses an HTTPS zip archive
   # (instead of the registry's git:: source) so `terraform init` does not require git.
   #source = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
-  source  = "git@github.com:terraform-aws-modules/terraform-aws-iam.git"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "5.52.2"
 
   role_name                              = "${module.eks_v2.cluster_name}-alb-controller"
