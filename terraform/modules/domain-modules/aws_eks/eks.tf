@@ -6,7 +6,9 @@ resource "random_string" "suffix_v2" {
 module "alb_controller_irsa_role_v2" {
   # Pinned to the same commit as registry version 5.52.2. Uses an HTTPS zip archive
   # (instead of the registry's git:: source) so `terraform init` does not require git.
-  source = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  #source = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.52.2"
 
   role_name                              = "${module.eks_v2.cluster_name}-alb-controller"
   attach_load_balancer_controller_policy = true
@@ -20,7 +22,9 @@ module "alb_controller_irsa_role_v2" {
 }
 
 module "vpc_cni_irsa_role_v2" {
-  source    = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  #source    = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.52.2"
   role_name = "${module.eks_v2.cluster_name}-vpc-cni"
 
   attach_vpc_cni_policy = true
@@ -37,7 +41,9 @@ module "vpc_cni_irsa_role_v2" {
 
 # irsa - csi ebs storage
 module "ebs_csi_irsa_role_v2" {
-  source                = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  #source                = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.52.2"
   role_name             = "${module.eks_v2.cluster_name}-ebs-csi"
   attach_ebs_csi_policy = true
 
@@ -52,7 +58,9 @@ module "ebs_csi_irsa_role_v2" {
 
 
 module "efs_csi_irsa_role_v2" {
-  source                = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  #source                = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.52.2"
   role_name             = "${module.eks_v2.cluster_name}-efs-csi"
   attach_efs_csi_policy = true
 
@@ -66,7 +74,9 @@ module "efs_csi_irsa_role_v2" {
 }
 
 module "s3_mountpoint_irsa_role_v2" {
-  source                          = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  #source                          = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.52.2"
   role_name                       = "${module.eks_v2.cluster_name}-s3-mountpoint-csi"
   attach_mountpoint_s3_csi_policy = true
   mountpoint_s3_csi_bucket_arns   = local.s3_data_buckets_arn
@@ -82,7 +92,9 @@ module "s3_mountpoint_irsa_role_v2" {
 }
 
 module "cloudwatch_observability_role_v2" {
-  source                                 = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  #source                                 = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.52.2"
   role_name                              = "${module.eks_v2.cluster_name}-cloudwatch-observability"
   attach_cloudwatch_observability_policy = true
 
@@ -98,7 +110,9 @@ module "cloudwatch_observability_role_v2" {
 module "eks_v2" {
   # Pinned to the same commit as registry version 20.37.1. Uses an HTTPS zip archive
   # (instead of the registry's git:: source) so `terraform init` does not require git.
-  source          = "https://github.com/terraform-aws-modules/terraform-aws-eks/archive/4c0a8fc4fd534fc039ca075b5bedd56c672d4c5f.zip//terraform-aws-eks-4c0a8fc4fd534fc039ca075b5bedd56c672d4c5f"
+  #source          = "https://github.com/terraform-aws-modules/terraform-aws-eks/archive/4c0a8fc4fd534fc039ca075b5bedd56c672d4c5f.zip//terraform-aws-eks-4c0a8fc4fd534fc039ca075b5bedd56c672d4c5f"
+  source          = "terraform-aws-modules/eks/aws"
+  version         = "20.37.1"
   cluster_name    = "${local.selected_env}-${var.cluster_name}"
   cluster_version = var.cluster_version
 
