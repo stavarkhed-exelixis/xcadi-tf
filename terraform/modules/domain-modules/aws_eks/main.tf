@@ -22,12 +22,12 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.95, < 6.0.0"
       }
-    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
   }
+}
 
 # Provider tied to whatever account/role Terraform is actually executing
 # as (e.g. the prod pipeline identity). Used only to detect the execution
