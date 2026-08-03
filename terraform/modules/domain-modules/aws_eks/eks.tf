@@ -23,8 +23,8 @@ module "alb_controller_irsa_role_v2" {
 
 module "vpc_cni_irsa_role_v2" {
   #source    = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.52.2"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "6.7.0"
   role_name = "${module.eks_v2.cluster_name}-vpc-cni"
 
   attach_vpc_cni_policy = true
