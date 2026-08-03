@@ -16,9 +16,12 @@
 # session. This mirrors the pattern used in dip_databricks_resources.
 
 terraform {
+  required_version = ">= 1.3.2"
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
+      version = ">= 5.95, < 6.0.0"
+    }
     }
     random = {
       source  = "hashicorp/random"
