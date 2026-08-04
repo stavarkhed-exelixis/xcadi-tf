@@ -7,7 +7,7 @@ module "alb_controller_irsa_role_v2" {
   # Pinned to the same commit as registry version 5.52.2. Uses an HTTPS zip archive
   # (instead of the registry's git:: source) so `terraform init` does not require git.
   #source = "https://github.com/terraform-aws-modules/terraform-aws-iam/archive/e803e25ce20a6ebd5579e0896f657fa739f6f03e.zip//terraform-aws-iam-e803e25ce20a6ebd5579e0896f657fa739f6f03e/modules/iam-role-for-service-accounts-eks"
-  source  = "git@github.com:terraform-aws-modules/terraform-aws-eks.git?ref=5.52.2"
+  #source  = "git@github.com:terraform-aws-modules/terraform-aws-eks.git?ref=5.52.2"
   #version = "5.52.2"
 
   role_name                              = "${module.eks_v2.cluster_name}-alb-controller"
@@ -111,8 +111,8 @@ module "eks_v2" {
   # Pinned to the same commit as registry version 20.37.1. Uses an HTTPS zip archive
   # (instead of the registry's git:: source) so `terraform init` does not require git.
   #source          = "https://github.com/terraform-aws-modules/terraform-aws-eks/archive/4c0a8fc4fd534fc039ca075b5bedd56c672d4c5f.zip//terraform-aws-eks-4c0a8fc4fd534fc039ca075b5bedd56c672d4c5f"
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "20.37.1"
+  source          = "git::https://github.com/terraform-aws-modules/terraform-aws-eks.git?ref=v20.37.1"
+  #version         = "20.37.1"
   cluster_name    = "${local.selected_env}-${var.cluster_name}"
   cluster_version = var.cluster_version
 
