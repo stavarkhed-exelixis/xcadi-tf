@@ -3,14 +3,20 @@
 terraform {
   required_providers {
     databricks = {
-      source = "databricks/databricks"
+      source  = "databricks/databricks"
+      version = "1.121.0"
     }
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
+      version = "6.55.0"
     }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.11"
     }
   }
 }
@@ -59,7 +65,35 @@ data "aws_caller_identity" "execution" {
 data "aws_caller_identity" "current" {}
 
 locals {
-  selected_env                  = one(var.env)
+  selected_env = one(var.env)
+
+  # Env-based network selection. Override vars are optional/hidden; leave unset to auto-pick.
+  vpc_id_by_env = {
+    dev  = "vpc-03a1c6cdfdf50131a"
+    test = "vpc-09003dc0cd39a906d"
+    uat  = "vpc-09003dc0cd39a906d"
+    prod = "vpc-0e1ca011ae756b11e"
+    sbx  = "vpc-06c6ab793749403fe"
+  }
+  vpc_cidr_by_env = {
+    dev  = "10.98.176.0/20"
+    test = "10.99.224.0/20"
+    uat  = "10.99.224.0/20"
+    prod = "10.99.240.0/20"
+    sbx  = "10.99.200.0/21"
+  }
+  subnet_ids_by_env = {
+    dev  = ["subnet-0a50d2556d3eafd79", "subnet-067aa17ba2d40169f"]
+    test = ["subnet-038ede2c44bda3318", "subnet-01669074c59d656c1"]
+    uat  = ["subnet-038ede2c44bda3318", "subnet-01669074c59d656c1"]
+    prod = ["subnet-08ded07d37dee4d13", "subnet-08381965d02d998b4", "subnet-0ffed3c5fd61018fd"]
+    sbx  = ["subnet-0b90da08454203576", "subnet-0ee1395fd6fb32c82"]
+  }
+
+  effective_vpc_id     = coalesce(var.vpc_id, local.vpc_id_by_env[local.selected_env])
+  effective_vpc_cidr   = var.vpc_cidr != null ? var.vpc_cidr : [local.vpc_cidr_by_env[local.selected_env]]
+  effective_subnet_ids = var.subnet_ids != null ? var.subnet_ids : local.subnet_ids_by_env[local.selected_env]
+
   selected_aws_account_label    = lookup(var.aws_account_label_by_env, local.selected_env, "")
   selected_account_number       = lookup(var.aws_account_number_by_env, local.selected_env, "")
   target_backend_irsa_role_name = lookup(var.backend_irsa_role_name_by_env, local.selected_env, "prod-xcadi-backend-irsa-role")
@@ -81,10 +115,10 @@ locals {
     {
       ucoa           = "1000011007020086"
       product        = "Cloud Platform"
-      productmanager =  var.product_manager #"Hiep luong"
-      productowner   =  var.product_owner   #"Prashanth Mamidala"
+      productmanager = var.product_manager #"Hiep luong"
+      productowner   = var.product_owner   #"Prashanth Mamidala"
       platform       = var.platform
-      created_by      = var.created_by
+      created_by     = var.created_by
       environment    = local.selected_env
       domain         = var.domain_name
     },

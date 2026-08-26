@@ -1,10 +1,11 @@
 resource "databricks_cluster" "Default_Cluster" {
   count = var.enable_default_cluster ? 1 : 0
   depends_on = [
-    databricks_cluster_policy.Default_Cluster_Policy
+    databricks_cluster_policy.Default_Cluster_Policy,
+    databricks_mws_workspaces.this
   ]
   provider                = databricks.workspace
-  cluster_name            = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-dbx-cluster"
+  cluster_name            = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-dbx-cluster"
   spark_version           = var.spark_version
   node_type_id            = var.node_type_id
   autotermination_minutes = var.auto_termination_minutes

@@ -22,6 +22,14 @@ resource "databricks_permissions" "cluster_access" {
   }
 
   dynamic "access_control" {
+    for_each = local.custom_groups_map
+    content {
+      group_name       = local.workspace_group_display_names[access_control.key]
+      permission_level = "CAN_RESTART"
+    }
+  }
+
+  dynamic "access_control" {
     for_each = var.git_integration ? [databricks_service_principal.svc_git[0].application_id] : []
     content {
       service_principal_name = access_control.value
@@ -80,6 +88,7 @@ resource "databricks_permissions" "cluster_access" {
 
 resource "databricks_permissions" "token_usage" {
   count         = var.enable_token_usage_permissions ? 1 : 0
+  depends_on    = [databricks_mws_workspaces.this]
   provider      = databricks.workspace
   authorization = "tokens"
 

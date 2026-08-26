@@ -1,8 +1,9 @@
 resource "databricks_service_principal" "svc_atlan" {
-  count    = var.atlan_integration ? 1 : 0
-  provider = databricks.workspace
+  count      = var.atlan_integration ? 1 : 0
+  depends_on = [databricks_mws_workspaces.this]
+  provider   = databricks.workspace
 
-  display_name = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}_svc_atlan"
+  display_name = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}_svc_atlan"
 }
 
 resource "databricks_service_principal_secret" "svc_atlan_secret" {
@@ -18,8 +19,8 @@ resource "aws_secretsmanager_secret" "databricks_atlan_sp_secret" {
   count      = var.atlan_integration ? 1 : 0
   depends_on = [databricks_service_principal_secret.svc_atlan_secret]
 
-  name        = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-atlan-dbx-svc-principal"
-  description = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""} Databricks atlan service principal credentials"
+  name        = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-atlan-dbx-svc-principal"
+  description = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""} Databricks atlan service principal credentials"
 }
 
 resource "aws_secretsmanager_secret_version" "databricks_atlan_sp_secret_version" {

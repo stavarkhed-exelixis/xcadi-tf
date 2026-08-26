@@ -1,8 +1,9 @@
 resource "databricks_cluster_policy" "job_cluster_policy" {
-  count    = var.enable_job_cluster_policy ? 1 : 0
-  provider = databricks.workspace
+  count      = var.enable_job_cluster_policy ? 1 : 0
+  depends_on = [databricks_mws_workspaces.this]
+  provider   = databricks.workspace
 
-  name             = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-dbx-job-cluster-policy"
+  name             = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-dbx-job-cluster-policy"
   policy_family_id = "job-cluster"
 
   description = "Job-only cluster policy with guardrails and access mode ${var.job_cluster_access_mode}."
@@ -73,6 +74,7 @@ resource "databricks_cluster_policy" "job_cluster_policy" {
 
 resource "databricks_permissions" "policy_use" {
   count             = var.enable_job_cluster_policy ? 1 : 0
+  depends_on        = [databricks_cluster_policy.job_cluster_policy]
   provider          = databricks.workspace
   cluster_policy_id = databricks_cluster_policy.job_cluster_policy[0].id
 

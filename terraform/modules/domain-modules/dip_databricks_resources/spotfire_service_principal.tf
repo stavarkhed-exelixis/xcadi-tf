@@ -3,7 +3,7 @@ resource "databricks_service_principal" "svc_spotfire" {
   depends_on = [databricks_mws_workspaces.this]
   provider   = databricks.workspace
 
-  display_name = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}_svc_spotfire"
+  display_name = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}_svc_spotfire"
 }
 
 resource "databricks_service_principal_secret" "svc_spotfire_secret" {
@@ -19,8 +19,8 @@ resource "aws_secretsmanager_secret" "databricks_spotfire_sp_secret" {
   count      = var.spotfire_integration ? 1 : 0
   depends_on = [databricks_service_principal_secret.svc_spotfire_secret]
 
-  name        = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-spotfire-dbx-svc-principal"
-  description = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""} Databricks spotfire service principal credentials"
+  name        = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-spotfire-dbx-svc-principal"
+  description = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""} Databricks spotfire service principal credentials"
 }
 
 resource "aws_secretsmanager_secret_version" "databricks_spotfire_sp_secret_version" {

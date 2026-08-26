@@ -1,7 +1,8 @@
 resource "databricks_directory" "domain_folder" {
-  count    = var.enable_workspace_folder ? 1 : 0
-  provider = databricks.workspace
-  path     = "/Workspace/${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}"
+  count      = var.enable_workspace_folder ? 1 : 0
+  depends_on = [databricks_mws_workspaces.this]
+  provider   = databricks.workspace
+  path       = "/Workspace/${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}"
 }
 
 resource "databricks_permissions" "folder_permission" {

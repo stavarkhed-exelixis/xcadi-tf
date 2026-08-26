@@ -3,7 +3,7 @@ resource "databricks_service_principal" "svc_git" {
   depends_on = [databricks_mws_workspaces.this]
   provider   = databricks.workspace
 
-  display_name = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}_svc_git"
+  display_name = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}_svc_git"
 }
 
 resource "databricks_service_principal_secret" "svc_git_secret" {
@@ -19,8 +19,9 @@ resource "aws_secretsmanager_secret" "databricks_git_sp_secret" {
   count      = var.git_integration ? 1 : 0
   depends_on = [databricks_service_principal_secret.svc_git_secret]
 
-  name        = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-git-dbx-svc-principal"
-  description = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""} Databricks git service principal credentials"
+  name        = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-git-dbx-svc-principal"
+  description = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""} Databricks git service principal credentials"
+  # recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "databricks_sp_secret_version" {

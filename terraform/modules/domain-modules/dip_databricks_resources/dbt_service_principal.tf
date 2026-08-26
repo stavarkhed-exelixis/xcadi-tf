@@ -3,7 +3,7 @@ resource "databricks_service_principal" "svc_dbt" {
   depends_on = [databricks_mws_workspaces.this]
   provider   = databricks.workspace
 
-  display_name = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}_svc_dbt"
+  display_name = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}_svc_dbt"
 }
 
 resource "databricks_service_principal_secret" "svc_dbt_secret" {
@@ -19,8 +19,8 @@ resource "aws_secretsmanager_secret" "databricks_dbt_sp_secret" {
   count      = var.dbt_integration ? 1 : 0
   depends_on = [databricks_service_principal_secret.svc_dbt_secret]
 
-  name        = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-dbt-dbx-svc-principal"
-  description = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""} Databricks dbt service principal credentials"
+  name        = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-dbt-dbx-svc-principal"
+  description = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""} Databricks dbt service principal credentials"
 }
 
 resource "aws_secretsmanager_secret_version" "databricks_dbt_sp_secret_version" {
