@@ -803,6 +803,8 @@ variable "allowed_ip_addresses" {
 
     "65.209.203.253", #Old IP, we still need it.
 
+    "52.33.152.20", #clealake dev eks NAT gateway IP
+
     #posit IPs (EKS hosted)
     #clearlake dev eks
     "54.190.115.140",
