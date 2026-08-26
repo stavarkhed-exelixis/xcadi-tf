@@ -94,15 +94,15 @@ variable "backend_irsa_role_name_by_env" {
 }
 
 variable "vpc_id" {
-  description = "Optional override: VPC ID. Leave unset to auto-pick from selected env."
+  description = "VPC ID"
   type        = string
-  default     = null
+  default     = "vpc-02b08032b2dbdca8e"
 }
 
 variable "subnet_ids" {
-  description = "Optional override: subnet ids (minimum 2 required). Leave unset to auto-pick from selected env."
+  description = "List of subnet IDs (minimum 2 required)"
   type        = list(string)
-  default     = null
+  default     = ["subnet-005f25a47d7ab2e03", "subnet-09e15d5b612393879"]
 }
 
 variable "security_group_ids" {
@@ -133,9 +133,9 @@ variable "databricks_account_assume_role_arn" {
 }
 
 variable "vpc_cidr" {
-  description = "Optional override: CIDR blocks allowed for VPC-wide ingress to the module-managed Databricks security group. Leave unset to auto-pick from selected env."
+  description = "CIDR blocks allowed for VPC-wide ingress to the module-managed Databricks security group."
   type        = list(string)
-  default     = null
+  default     = ["10.98.200.0/22"]
 }
 
 variable "workspace_prefix_list_ids" {
@@ -802,6 +802,8 @@ variable "allowed_ip_addresses" {
     "137.31.49.58",
 
     "65.209.203.253", #Old IP, we still need it.
+
+    "52.33.152.20", #clealake dev eks NAT gateway IP
 
     #posit IPs (EKS hosted)
     #clearlake dev eks

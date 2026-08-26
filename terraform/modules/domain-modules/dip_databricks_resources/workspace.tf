@@ -7,13 +7,13 @@ locals {
 resource "aws_security_group" "databricks" {
   count       = var.enable_workspace_security_group && !local.create_sg_in_databricks_account ? 1 : 0
   name_prefix = "${local.selected_env}-dip-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-databricks-workspace"
-  vpc_id      = local.effective_vpc_id
+  vpc_id      = var.vpc_id
   description = "Security group for Databricks workspace"
 
   dynamic "ingress" {
-    for_each = length(concat(local.effective_vpc_cidr, local.zscaler_cidr_blocks)) > 0 ? [1] : []
+    for_each = length(concat(var.vpc_cidr, local.zscaler_cidr_blocks)) > 0 ? [1] : []
     content {
-      cidr_blocks = concat(local.effective_vpc_cidr, local.zscaler_cidr_blocks)
+      cidr_blocks = concat(var.vpc_cidr, local.zscaler_cidr_blocks)
       description = "Allow all traffic from VPC and Zscaler CIDR blocks"
       protocol    = "-1"
       from_port   = 0
@@ -55,13 +55,13 @@ resource "aws_security_group" "databricks_in_databricks_account" {
   provider    = aws.databricks_account
   count       = var.enable_workspace_security_group && local.create_sg_in_databricks_account ? 1 : 0
   name_prefix = "${local.selected_env}-dip-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-databricks-workspace"
-  vpc_id      = local.effective_vpc_id
+  vpc_id      = var.vpc_id
   description = "Security group for Databricks workspace"
 
   dynamic "ingress" {
-    for_each = length(concat(local.effective_vpc_cidr, local.zscaler_cidr_blocks)) > 0 ? [1] : []
+    for_each = length(concat(var.vpc_cidr, local.zscaler_cidr_blocks)) > 0 ? [1] : []
     content {
-      cidr_blocks = concat(local.effective_vpc_cidr, local.zscaler_cidr_blocks)
+      cidr_blocks = concat(var.vpc_cidr, local.zscaler_cidr_blocks)
       description = "Allow all traffic from VPC and Zscaler CIDR blocks"
       protocol    = "-1"
       from_port   = 0
@@ -114,8 +114,8 @@ resource "databricks_mws_networks" "this" {
   security_group_ids = var.enable_workspace_security_group ? (
     local.create_sg_in_databricks_account ? [aws_security_group.databricks_in_databricks_account[0].id] : [aws_security_group.databricks[0].id]
   ) : var.security_group_ids
-  subnet_ids = local.effective_subnet_ids
-  vpc_id     = local.effective_vpc_id
+  subnet_ids = var.subnet_ids
+  vpc_id     = var.vpc_id
 }
 
 resource "databricks_metastore_assignment" "this" {
