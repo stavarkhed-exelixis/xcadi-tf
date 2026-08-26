@@ -10,7 +10,8 @@ resource "databricks_workspace_binding" "bind_catalog" {
 resource "databricks_catalog" "this" {
   count = var.enable_catalog ? 1 : 0
   depends_on = [
-    databricks_external_location.root_dbx_catalog_external_location
+    databricks_external_location.root_dbx_catalog_external_location,
+    databricks_metastore_assignment.this
   ]
   provider       = databricks.workspace
   storage_root   = "s3://${local.effective_root_storage_bucket}/unity-catalog/${local.selected_env}/${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "/${local.normalized_subdomain_name}" : ""}"
@@ -76,7 +77,8 @@ resource "databricks_catalog" "additional" {
   for_each = var.enable_catalog ? local.additional_catalogs_map : {}
   depends_on = [
     databricks_external_location.root_dbx_catalog_external_location,
-    aws_s3_object.dbx_additional_catalog_folder_creation
+    aws_s3_object.dbx_additional_catalog_folder_creation,
+    databricks_metastore_assignment.this
   ]
   provider       = databricks.workspace
   storage_root   = "s3://${local.effective_root_storage_bucket}/unity-catalog/${local.selected_env}/${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "/${local.normalized_subdomain_name}" : ""}/${each.key}"

@@ -5,7 +5,7 @@
 resource "aws_s3_object" "dbx_unity_catalog_folder_creation" {
   count   = var.enable_catalog ? 1 : 0
   bucket  = local.effective_root_storage_bucket
-  key     = "unity-catalog/${local.selected_env}/${local.normalized_domain_name}/${var.team_name != "" ? "${var.team_name}/" : ""}"
+  key     = "unity-catalog/${local.selected_env}/${local.normalized_domain_name}/${local.normalized_subdomain_name != "" ? "${local.normalized_subdomain_name}/" : ""}"
   content = ""
 }
 
@@ -19,6 +19,10 @@ resource "aws_s3_object" "dbx_additional_catalog_folder_creation" {
 resource "databricks_storage_credential" "dbx_root_storage_credential" {
   count    = var.enable_catalog ? 1 : 0
   provider = databricks.workspace
+  depends_on = [
+    databricks_mws_workspaces.this,
+    databricks_metastore_assignment.this
+  ]
 
   name    = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-root-dbx-uc-storage_credential"
   comment = "Credential for root ${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "_${local.normalized_subdomain_name}" : ""} external location"
@@ -27,21 +31,24 @@ resource "databricks_storage_credential" "dbx_root_storage_credential" {
   }
   isolation_mode = "ISOLATION_MODE_ISOLATED"
   force_update   = true
+  force_destroy  = true
 }
 
 resource "databricks_external_location" "root_dbx_catalog_external_location" {
   count = var.enable_catalog ? 1 : 0
   depends_on = [
     databricks_mws_workspaces.this,
-    aws_s3_object.dbx_unity_catalog_folder_creation
+    aws_s3_object.dbx_unity_catalog_folder_creation,
+    databricks_metastore_assignment.this
   ]
   provider = databricks.workspace
 
-  name            = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-uc-root-external_location"
-  url             = "s3://${local.effective_root_storage_bucket}/unity-catalog/${local.selected_env}/${local.normalized_domain_name}/${var.team_name != "" ? "${var.team_name}/" : ""}"
+  name            = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-uc-root-external_location"
+  url             = "s3://${local.effective_root_storage_bucket}/unity-catalog/${local.selected_env}/${local.normalized_domain_name}/${local.normalized_subdomain_name != "" ? "${local.normalized_subdomain_name}/" : ""}"
   credential_name = databricks_storage_credential.dbx_root_storage_credential[0].name
-  comment         = "ROOT External location for ${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "_${var.team_name}" : ""} catalog"
+  comment         = "ROOT External location for ${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "_${local.normalized_subdomain_name}" : ""} catalog"
   force_update    = true
+  force_destroy   = true
   isolation_mode  = "ISOLATION_MODE_ISOLATED"
 }
 

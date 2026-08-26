@@ -8,10 +8,10 @@ locals {
   # Convert list-of-strings ("name|description") to a map keyed by name for for_each usage
   additional_catalogs_map = {
     for entry in var.additional_catalogs :
-      trimspace(split("|", entry)[0]) => {
-        name        = trimspace(split("|", entry)[0])
-        description = trimspace(join("|", slice(split("|", entry), 1, length(split("|", entry)))))
-      }
+    trimspace(split("|", entry)[0]) => {
+      name        = trimspace(split("|", entry)[0])
+      description = trimspace(join("|", slice(split("|", entry), 1, length(split("|", entry)))))
+    }
   }
 
   # ------------------------------------------------------------------
@@ -78,4 +78,62 @@ locals {
     for p in var.additional_uc_external_location_path_prefixes :
     trim(replace(trim(p, "/"), "/", "-"), "-") => p
   }
+}
+
+locals {
+  # Map of service principal application_id => external location privileges
+  # Only includes SPs that have been created (integration enabled)
+  sp_external_location_grants = merge(
+    var.git_integration ? {
+      tostring(databricks_service_principal.svc_git[0].application_id) = ["READ_FILES", "WRITE_FILES", "BROWSE"]
+    } : {},
+    var.atlan_integration ? {
+      tostring(databricks_service_principal.svc_atlan[0].application_id) = ["READ_FILES", "WRITE_FILES", "BROWSE"]
+    } : {},
+    var.dbt_integration ? {
+      tostring(databricks_service_principal.svc_dbt[0].application_id) = ["READ_FILES", "WRITE_FILES", "BROWSE"]
+    } : {},
+    var.spotfire_integration ? {
+      tostring(databricks_service_principal.svc_spotfire[0].application_id) = ["READ_FILES", "WRITE_FILES", "BROWSE"]
+    } : {},
+    var.tableau_integration ? {
+      tostring(databricks_service_principal.svc_tableau[0].application_id) = ["READ_FILES", "WRITE_FILES", "BROWSE"]
+    } : {},
+    var.posit_integration ? {
+      tostring(databricks_service_principal.svc_posit[0].application_id) = ["READ_FILES", "WRITE_FILES", "BROWSE"]
+    } : {},
+    var.sas_integration ? {
+      tostring(databricks_service_principal.svc_sas[0].application_id) = ["READ_FILES", "WRITE_FILES", "BROWSE"]
+    } : {},
+    var.powerapps_integration ? {
+      tostring(databricks_service_principal.svc_powerapps[0].application_id) = ["READ_FILES", "WRITE_FILES", "BROWSE"]
+    } : {},
+  )
+
+  sp_service_credential_grants = merge(
+    var.git_integration ? {
+      tostring(databricks_service_principal.svc_git[0].application_id) = ["ACCESS"]
+    } : {},
+    var.atlan_integration ? {
+      tostring(databricks_service_principal.svc_atlan[0].application_id) = ["ACCESS"]
+    } : {},
+    var.dbt_integration ? {
+      tostring(databricks_service_principal.svc_dbt[0].application_id) = ["ACCESS"]
+    } : {},
+    var.spotfire_integration ? {
+      tostring(databricks_service_principal.svc_spotfire[0].application_id) = ["ACCESS"]
+    } : {},
+    var.tableau_integration ? {
+      tostring(databricks_service_principal.svc_tableau[0].application_id) = ["ACCESS"]
+    } : {},
+    var.posit_integration ? {
+      tostring(databricks_service_principal.svc_posit[0].application_id) = ["ACCESS"]
+    } : {},
+    var.sas_integration ? {
+      tostring(databricks_service_principal.svc_sas[0].application_id) = ["ACCESS"]
+    } : {},
+    var.powerapps_integration ? {
+      tostring(databricks_service_principal.svc_powerapps[0].application_id) = ["ACCESS"]
+    } : {},
+  )
 }

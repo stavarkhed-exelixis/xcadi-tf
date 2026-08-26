@@ -1,8 +1,9 @@
 resource "databricks_service_principal" "svc_tableau" {
-  count    = var.tableau_integration ? 1 : 0
-  provider = databricks.workspace
+  count      = var.tableau_integration ? 1 : 0
+  depends_on = [databricks_mws_workspaces.this]
+  provider   = databricks.workspace
 
-  display_name = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}_svc_tableau"
+  display_name = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}_svc_tableau"
 }
 
 resource "databricks_service_principal_secret" "svc_tableau_secret" {
@@ -18,8 +19,8 @@ resource "aws_secretsmanager_secret" "databricks_tableau_sp_secret" {
   count      = var.tableau_integration ? 1 : 0
   depends_on = [databricks_service_principal_secret.svc_tableau_secret]
 
-  name        = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-tableau-dbx-svc-principal"
-  description = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""} Databricks tableau service principal credentials"
+  name        = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-tableau-dbx-svc-principal"
+  description = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""} Databricks tableau service principal credentials"
 }
 
 resource "aws_secretsmanager_secret_version" "databricks_tableau_sp_secret_version" {

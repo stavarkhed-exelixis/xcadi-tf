@@ -2,7 +2,7 @@
 
 ## Environment-Driven Deployment Routing
 
-This module deploys by selected `env` only (`dev`, `test`, `uat`, `prod`).
+This module deploys by selected `env` only (`dev`, `test`, `uat`, `prod`, `sbx`).
 There is no account-name input variable.
 
 Default routing from env to target account is:
@@ -11,12 +11,14 @@ Default routing from env to target account is:
 - `test` -> `clearlake-test` (`154916814622`)
 - `uat` -> `clearlake-test` (`154916814622`)
 - `prod` -> `clearlake-prod` (`754095075756`)
+- `sbx` -> `clearlake-sbx` (`596878271343`)
 
-Terraform can run from DEV, TEST, or PROD UI/account context. It assumes the env-target backend IRSA role unless Terraform is already running as that exact role, in which case it reuses the current session:
+Terraform can run from DEV, TEST, PROD, or SBX UI/account context. It assumes the env-target backend IRSA role unless Terraform is already running as that exact role, in which case it reuses the current session:
 
 - `dev` -> assumes `dev-xcadi-backend-irsa-role`
 - `test`/`uat` -> assumes `test-xcadi-backend-irsa-role`
 - `prod` -> assumes `prod-xcadi-backend-irsa-role`
+- `sbx` -> assumes `sbx-xcadi-backend-irsa-role`
 
 For `uat`, only the Databricks credentials secret is reused from `test`. Resource names, tags, bucket selection, and all other env-driven conventions still use `uat`.
 
@@ -26,6 +28,7 @@ Default Databricks credential secret routing is:
 - `test` -> `databricks/dip-test/credentials`
 - `uat` -> `databricks/dip-test/credentials`
 - `prod` -> `databricks/dip-prod/credentials`
+- `sbx` -> `databricks/dip-sbx/credentials`
 
 This behavior is controlled with:
 

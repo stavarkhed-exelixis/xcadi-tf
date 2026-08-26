@@ -1,8 +1,9 @@
 resource "databricks_service_principal" "svc_posit" {
-  count    = var.posit_integration ? 1 : 0
-  provider = databricks.workspace
+  count      = var.posit_integration ? 1 : 0
+  depends_on = [databricks_mws_workspaces.this]
+  provider   = databricks.workspace
 
-  display_name = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}_svc_posit"
+  display_name = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}_svc_posit"
 }
 
 resource "databricks_service_principal_secret" "svc_posit_secret" {
@@ -18,8 +19,8 @@ resource "aws_secretsmanager_secret" "databricks_posit_sp_secret" {
   count      = var.posit_integration ? 1 : 0
   depends_on = [databricks_service_principal_secret.svc_posit_secret]
 
-  name        = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-posit-dbx-svc-principal"
-  description = "${local.selected_env}_${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""} Databricks posit service principal credentials"
+  name        = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-posit-dbx-svc-principal"
+  description = "${local.selected_env}_${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""} Databricks posit service principal credentials"
 }
 
 resource "aws_secretsmanager_secret_version" "databricks_posit_sp_secret_version" {

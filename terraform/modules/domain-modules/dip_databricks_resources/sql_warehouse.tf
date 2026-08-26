@@ -4,10 +4,11 @@ locals {
 }
 
 resource "databricks_sql_endpoint" "sql_warehouse" {
-  count    = local.create_sql_warehouse ? 1 : 0
-  provider = databricks.workspace
+  count      = local.create_sql_warehouse ? 1 : 0
+  depends_on = [databricks_mws_workspaces.this]
+  provider   = databricks.workspace
 
-  name = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-dbx-sql-warehouse"
+  name = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-dbx-sql-warehouse"
 
   enable_serverless_compute = false
   cluster_size              = "Small"
@@ -36,8 +37,9 @@ resource "databricks_sql_endpoint" "sql_warehouse" {
 }
 
 resource "databricks_permissions" "sql_warehouse_permissions" {
-  count    = var.enable_sql_warehouse ? 1 : 0
-  provider = databricks.workspace
+  count      = var.enable_sql_warehouse ? 1 : 0
+  depends_on = [databricks_mws_workspaces.this]
+  provider   = databricks.workspace
 
   sql_endpoint_id = local.create_sql_warehouse ? databricks_sql_endpoint.sql_warehouse[0].id : local.existing_sql_warehouse_id
 
@@ -54,6 +56,14 @@ resource "databricks_permissions" "sql_warehouse_permissions" {
   access_control {
     group_name       = local.workspace_group_display_names["domain_consumers"]
     permission_level = "CAN_USE"
+  }
+
+  dynamic "access_control" {
+    for_each = local.custom_groups_map
+    content {
+      group_name       = local.workspace_group_display_names[access_control.key]
+      permission_level = "CAN_USE"
+    }
   }
 
   dynamic "access_control" {

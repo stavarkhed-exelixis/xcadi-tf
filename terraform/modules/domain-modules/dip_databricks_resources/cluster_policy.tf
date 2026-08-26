@@ -1,8 +1,9 @@
 resource "databricks_cluster_policy" "Default_Cluster_Policy" {
-  count    = var.enable_default_cluster ? 1 : 0
-  provider = databricks.workspace
+  count      = var.enable_default_cluster ? 1 : 0
+  depends_on = [databricks_mws_workspaces.this]
+  provider   = databricks.workspace
 
-  name = "${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-dbx-default-cluster-policy"
+  name = "${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-dbx-default-cluster-policy"
 
   definition = jsonencode({
     "spark_version" : {

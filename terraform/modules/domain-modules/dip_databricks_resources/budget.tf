@@ -2,7 +2,7 @@ resource "databricks_budget" "workspace_budget" {
   count    = var.enable_budget && trimspace(var.budget_email_target) != "" ? 1 : 0
   provider = databricks.mws
 
-  display_name = "dip-dbx-${local.selected_env}-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}"
+  display_name = "dip-dbx-${local.selected_env}-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}"
 
   alert_configurations {
     time_period        = "MONTH"
@@ -33,12 +33,12 @@ resource "databricks_budget" "workspace_budget" {
     }
 
     dynamic "tags" {
-      for_each = var.team_name != "" ? [var.team_name] : []
+      for_each = local.normalized_subdomain_name != "" ? [local.normalized_subdomain_name] : []
       content {
         key = "subdomain"
         value {
           operator = "IN"
-          values   = [tags.key]
+          values   = [local.normalized_subdomain_name]
         }
       }
     }

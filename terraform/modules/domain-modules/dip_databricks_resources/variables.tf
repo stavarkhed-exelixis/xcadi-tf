@@ -12,8 +12,8 @@ variable "databricks_credentials_env" {
   nullable    = true
 
   validation {
-    condition     = var.databricks_credentials_env == null ? true : contains(["dev", "test", "uat", "prod"], var.databricks_credentials_env)
-    error_message = "databricks_credentials_env must be one of: dev, test, uat, prod."
+    condition     = var.databricks_credentials_env == null ? true : contains(["dev", "test", "uat", "prod", "sbx"], var.databricks_credentials_env)
+    error_message = "databricks_credentials_env must be one of: dev, test, uat, prod, sbx."
   }
 }
 
@@ -51,6 +51,7 @@ variable "aws_account_number_by_env" {
     test = "154916814622"
     uat  = "154916814622"
     prod = "754095075756"
+    sbx  = "596878271343"
   }
 
   validation {
@@ -69,6 +70,7 @@ variable "aws_account_label_by_env" {
     test = "clearlake-test"
     uat  = "clearlake-test"
     prod = "clearlake-prod"
+    sbx  = "clearlake-sbx"
   }
 }
 
@@ -80,6 +82,7 @@ variable "backend_irsa_role_name_by_env" {
     test = "test-xcadi-backend-irsa-role"
     uat  = "test-xcadi-backend-irsa-role"
     prod = "prod-xcadi-backend-irsa-role"
+    sbx  = "sbx-xcadi-backend-irsa-role"
   }
 
   validation {
@@ -91,15 +94,15 @@ variable "backend_irsa_role_name_by_env" {
 }
 
 variable "vpc_id" {
-  description = "VPC ID"
+  description = "Optional override: VPC ID. Leave unset to auto-pick from selected env."
   type        = string
-  default     = "vpc-02b08032b2dbdca8e"
+  default     = null
 }
 
 variable "subnet_ids" {
-  description = "List of subnet IDs (minimum 2 required)"
+  description = "Optional override: subnet ids (minimum 2 required). Leave unset to auto-pick from selected env."
   type        = list(string)
-  default     = ["subnet-005f25a47d7ab2e03", "subnet-09e15d5b612393879"]
+  default     = null
 }
 
 variable "security_group_ids" {
@@ -130,9 +133,9 @@ variable "databricks_account_assume_role_arn" {
 }
 
 variable "vpc_cidr" {
-  description = "CIDR blocks allowed for VPC-wide ingress to the module-managed Databricks security group."
+  description = "Optional override: CIDR blocks allowed for VPC-wide ingress to the module-managed Databricks security group. Leave unset to auto-pick from selected env."
   type        = list(string)
-  default     = ["10.98.200.0/22"]
+  default     = null
 }
 
 variable "workspace_prefix_list_ids" {
@@ -211,7 +214,7 @@ variable "additional_catalogs" {
   validation {
     condition = alltrue([
       for entry in var.additional_catalogs :
-        can(regex("^[a-z0-9][a-z0-9_-]*\\|.+$", trimspace(entry)))
+      can(regex("^[a-z0-9][a-z0-9_-]*\\|.+$", trimspace(entry)))
     ])
     error_message = "Each additional_catalogs entry must be in format 'name|description'. Name must be lowercase alphanumeric with optional hyphens/underscores (e.g. 'analytics|My catalog description')."
   }
@@ -220,11 +223,11 @@ variable "additional_catalogs" {
 variable "force_destroy" {
   description = "Whether to force destroy catalog objects on delete"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "env" {
-  description = "Deployment environment as a single-item list (UI-friendly). Allowed values: dev, test, uat, prod."
+  description = "Deployment environment as a single-item list (UI-friendly). Allowed values: dev, test, uat, prod, sbx."
   type        = list(string)
 
   validation {
@@ -234,9 +237,9 @@ variable "env" {
 
   validation {
     condition = alltrue([
-      for e in var.env : contains(["dev", "test", "uat", "prod"], e)
+      for e in var.env : contains(["dev", "test", "uat", "prod", "sbx"], e)
     ])
-    error_message = "Invalid environment. Allowed values are dev, test, uat, prod."
+    error_message = "Invalid environment. Allowed values are dev, test, uat, prod, sbx."
   }
 }
 
@@ -309,6 +312,12 @@ variable "consumers_name" {
   description = "Databricks account group name for domain consumers"
   type        = string
   default     = "OG_DIP_DBricks_DATABRICKS_CONSUMERS"
+}
+
+variable "custom_groups" {
+  description = "Additional group names (beyond admins/developers/consumers) to assign to the workspace with USER access, and grant CAN_RESTART on the default cluster and CAN_USE on the SQL warehouse."
+  type        = list(string)
+  default     = []
 }
 
 variable "external_catalog_iam_role_arn" {
@@ -401,6 +410,20 @@ variable "additional_external_location_analytics_bucket" {
   default     = ""
 }
 
+variable "additional_external_locations" {
+  description = "Optional list of additional external locations to create in addition to the default RAW/STAGING/ANALYTICS locations. Each entry must be of the form 'bucket/path/prefix' with at least one path segment after the bucket. Trailing slashes and an optional 's3://' scheme prefix are accepted (e.g. 'my-bucket/foo/bar', 'my-bucket/foo/bar/', 's3://my-bucket/foo/bar/'). Bucket-only entries are not allowed. The bucket is automatically appended to the external catalog IAM role scope; permissions are scoped to the given prefix. Reuses the same storage credential."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for entry in var.additional_external_locations :
+      can(regex("^(s3://)?[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]/[^/].*$", trimspace(entry)))
+    ])
+    error_message = "Each additional_external_locations entry must be in the form 'bucket/path/prefix' (bucket followed by at least one path segment). Bucket-only entries are not permitted. Optional 's3://' scheme and trailing '/' are accepted."
+  }
+}
+
 variable "raw_bucket" {
   description = "RAW bucket by environment"
   type        = map(string)
@@ -409,13 +432,14 @@ variable "raw_bucket" {
     test = "exelixis-clearlake-daplex-test-us-west-2-154916814622-raw"
     uat  = "exelixis-clearlake-daplex-uat-us-west-2-154916814622-raw"
     prod = "exelixis-clearlake-daplex-prod-us-west-2-754095075756-raw"
+    sbx  = "exelixis-clearlake-daplex-dev-us-west-2-596878271343-raw"
   }
 
   validation {
     condition = alltrue([
-      for k in ["dev", "test", "uat", "prod"] : contains(keys(var.raw_bucket), k)
+      for k in ["dev", "test", "uat", "prod", "sbx"] : contains(keys(var.raw_bucket), k)
     ])
-    error_message = "raw_bucket must include keys for dev, test, uat, and prod."
+    error_message = "raw_bucket must include keys for dev, test, uat, prod, and sbx."
   }
 }
 
@@ -433,6 +457,9 @@ variable "raw_buckets_by_account_number" {
       test = "exelixis-clearlake-daplex-test-us-west-2-154916814622-raw"
       uat  = "exelixis-clearlake-daplex-uat-us-west-2-154916814622-raw"
     }
+    "596878271343" = {
+      sbx = "exelixis-clearlake-daplex-dev-us-west-2-596878271343-raw"
+    }
   }
 }
 
@@ -444,13 +471,14 @@ variable "staging_bucket" {
     test = "exelixis-clearlake-daplex-test-us-west-2-154916814622-staging"
     uat  = "exelixis-clearlake-daplex-uat-us-west-2-154916814622-staging"
     prod = "exelixis-clearlake-daplex-prod-us-west-2-754095075756-staging"
+    sbx  = "exelixis-clearlake-daplex-dev-us-west-2-596878271343-staging"
   }
 
   validation {
     condition = alltrue([
-      for k in ["dev", "test", "uat", "prod"] : contains(keys(var.staging_bucket), k)
+      for k in ["dev", "test", "uat", "prod", "sbx"] : contains(keys(var.staging_bucket), k)
     ])
-    error_message = "staging_bucket must include keys for dev, test, uat, and prod."
+    error_message = "staging_bucket must include keys for dev, test, uat, prod, and sbx."
   }
 }
 
@@ -468,6 +496,9 @@ variable "staging_buckets_by_account_number" {
       test = "exelixis-clearlake-daplex-test-us-west-2-154916814622-staging"
       uat  = "exelixis-clearlake-daplex-uat-us-west-2-154916814622-staging"
     }
+    "596878271343" = {
+      sbx = "exelixis-clearlake-daplex-dev-us-west-2-596878271343-staging"
+    }
   }
 }
 
@@ -479,13 +510,14 @@ variable "analytics_bucket" {
     test = "exelixis-clearlake-daplex-test-us-west-2-154916814622-analytics"
     uat  = "exelixis-clearlake-daplex-uat-us-west-2-154916814622-analytics"
     prod = "exelixis-clearlake-daplex-prod-us-west-2-754095075756-analytics"
+    sbx  = "exelixis-clearlake-daplex-dev-us-west-2-596878271343-analytics"
   }
 
   validation {
     condition = alltrue([
-      for k in ["dev", "test", "uat", "prod"] : contains(keys(var.analytics_bucket), k)
+      for k in ["dev", "test", "uat", "prod", "sbx"] : contains(keys(var.analytics_bucket), k)
     ])
-    error_message = "analytics_bucket must include keys for dev, test, uat, and prod."
+    error_message = "analytics_bucket must include keys for dev, test, uat, prod, and sbx."
   }
 }
 
@@ -502,6 +534,9 @@ variable "analytics_buckets_by_account_number" {
     "154916814622" = {
       test = "exelixis-clearlake-daplex-test-us-west-2-154916814622-analytics"
       uat  = "exelixis-clearlake-daplex-uat-us-west-2-154916814622-analytics"
+    }
+    "596878271343" = {
+      sbx = "exelixis-clearlake-daplex-dev-us-west-2-596878271343-analytics"
     }
   }
 }
@@ -521,7 +556,7 @@ variable "additional_uc_external_location_path_prefixes" {
 variable "spark_version" {
   description = "Spark version for default and job cluster policies"
   type        = string
-  default     = "18.2.x-scala2.13"
+  default     = "18.x-scala2.13"
 }
 
 variable "node_type_id" {
@@ -632,6 +667,12 @@ variable "sas_integration" {
   default     = false
 }
 
+variable "powerapps_integration" {
+  description = "Enable PowerApps integration service principal"
+  type        = bool
+  default     = false
+}
+
 variable "github_issuer_url" {
   description = "GitHub OIDC issuer URL"
   type        = string
@@ -702,7 +743,7 @@ variable "enable_budget" {
 variable "budget_email_target" {
   description = "Email target for budget alerts"
   type        = string
-  default     = ""
+  default     = "daplex@exelixis.com"
 }
 
 variable "budget_monthly_threshold_usd" {
@@ -753,7 +794,14 @@ variable "allowed_ip_addresses" {
     "44.255.234.127",
     "35.170.16.17",
     "54.80.27.113",
-    "65.209.203.253",  #Old IP, we still need it.
+
+    #SIPA IPs
+    "159.254.240.115",
+    "159.254.240.83",
+    "137.31.49.26",
+    "137.31.49.58",
+
+    "65.209.203.253", #Old IP, we still need it.
 
     #posit IPs (EKS hosted)
     #clearlake dev eks
@@ -763,13 +811,13 @@ variable "allowed_ip_addresses" {
     #clearlake test eks  
     "44.230.29.174",
     #clearlake prod eks and Self hosted github runner NAT gateway IPs
-    "44.226.245.197",  
+    "44.226.245.197",
 
     #Tableau IPs
-    "100.21.82.237",  #PRODTABLEAUSER
-    "44.233.200.109",  #tbswinprd02 and tbswinprd03
-    "52.37.162.125", #tbswinval01 and Spotfire VAL (gxp-tst) (AP1, AP2, WB1, WB2)
-    "44.228.70.8", #tbswindev01
+    "100.21.82.237",    #PRODTABLEAUSER
+    "44.233.200.109",   #tbswinprd02 and tbswinprd03
+    "52.37.162.125",    #tbswinval01 and Spotfire VAL (gxp-tst) (AP1, AP2, WB1, WB2)
+    "44.228.70.8",      #tbswindev01
     "155.226.128.0/21", #Tableau cloud us-west-2 (IP reference document: https://help.tableau.com/current/pro/desktop/en-us/publish_tableau_online_ip_authorization.htm)
 
     #Spotfire IPs
@@ -784,23 +832,60 @@ variable "allowed_ip_addresses" {
     "44.232.235.148", #saslxval02
     "18.236.35.220",  #saslxprd02
 
-    "44.250.94.210",  #AI portal dev application
+    "44.250.94.210", #AI portal dev application
 
     #Atlan IPs
     "52.12.143.119",
     "34.214.58.3",
 
-    #"52.11.164.200",
+    "52.11.164.200",
     #"135.232.177.183", #Github runner
-    
-    "34.214.50.116",   #Databricks NAT gateway IP address
-    
-    "35.160.252.116"    #Atlantis Egress IP
+
+    "34.214.50.116", #Databricks NAT gateway IP address
+
+    "35.160.252.116", #Atlantis Egress IP
   ]
 }
 
 variable "enable_esm" {
   description = "Enable Databricks Enhanced Security Monitoring for this workspace."
   type        = bool
-  default     = true
+  default     = false
+}
+
+variable "enable_ip_access_lists" {
+  description = "Enable Databricks IP access lists workspace setting."
+  type        = bool
+  default     = false
+}
+
+variable "enable_genie_space" {
+  description = "Enable Databricks Genie Space for this workspace."
+  type        = bool
+  default     = false
+}
+
+variable "enable_databricks_sandbox" {
+  description = "Enable Databricks Sandbox preview for this workspace when databricks_sandbox_setting_name is set."
+  type        = bool
+  default     = false
+}
+
+variable "databricks_sandbox_setting_name" {
+  description = "Settings V2 name for Databricks Sandbox preview in this workspace (for example, the setting ID shown in workspace previews/metadata)."
+  type        = string
+  default     = "lakebox"
+  nullable    = false
+}
+
+variable "additional_trusted_role_arns" {
+  description = "Optional list of additional IAM role ARNs that can assume this role (with Databricks external ID condition)."
+  type        = list(string)
+  default     = []
+}
+
+variable "additional_assumable_role_arns" {
+  description = "Optional list of additional IAM role ARNs that this role is allowed to assume."
+  type        = list(string)
+  default     = []
 }

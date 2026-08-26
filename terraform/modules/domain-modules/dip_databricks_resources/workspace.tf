@@ -6,14 +6,14 @@ locals {
 
 resource "aws_security_group" "databricks" {
   count       = var.enable_workspace_security_group && !local.create_sg_in_databricks_account ? 1 : 0
-  name_prefix = "${local.selected_env}-dip-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-databricks-workspace"
-  vpc_id      = var.vpc_id
+  name_prefix = "${local.selected_env}-dip-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-databricks-workspace"
+  vpc_id      = local.effective_vpc_id
   description = "Security group for Databricks workspace"
 
   dynamic "ingress" {
-    for_each = length(concat(var.vpc_cidr, local.zscaler_cidr_blocks)) > 0 ? [1] : []
+    for_each = length(concat(local.effective_vpc_cidr, local.zscaler_cidr_blocks)) > 0 ? [1] : []
     content {
-      cidr_blocks = concat(var.vpc_cidr, local.zscaler_cidr_blocks)
+      cidr_blocks = concat(local.effective_vpc_cidr, local.zscaler_cidr_blocks)
       description = "Allow all traffic from VPC and Zscaler CIDR blocks"
       protocol    = "-1"
       from_port   = 0
@@ -54,14 +54,14 @@ resource "aws_security_group" "databricks" {
 resource "aws_security_group" "databricks_in_databricks_account" {
   provider    = aws.databricks_account
   count       = var.enable_workspace_security_group && local.create_sg_in_databricks_account ? 1 : 0
-  name_prefix = "${local.selected_env}-dip-${local.normalized_domain_name}${var.team_name != "" ? "-${var.team_name}" : ""}-databricks-workspace"
-  vpc_id      = var.vpc_id
+  name_prefix = "${local.selected_env}-dip-${local.normalized_domain_name}${local.normalized_subdomain_name != "" ? "-${local.normalized_subdomain_name}" : ""}-databricks-workspace"
+  vpc_id      = local.effective_vpc_id
   description = "Security group for Databricks workspace"
 
   dynamic "ingress" {
-    for_each = length(concat(var.vpc_cidr, local.zscaler_cidr_blocks)) > 0 ? [1] : []
+    for_each = length(concat(local.effective_vpc_cidr, local.zscaler_cidr_blocks)) > 0 ? [1] : []
     content {
-      cidr_blocks = concat(var.vpc_cidr, local.zscaler_cidr_blocks)
+      cidr_blocks = concat(local.effective_vpc_cidr, local.zscaler_cidr_blocks)
       description = "Allow all traffic from VPC and Zscaler CIDR blocks"
       protocol    = "-1"
       from_port   = 0
@@ -114,13 +114,14 @@ resource "databricks_mws_networks" "this" {
   security_group_ids = var.enable_workspace_security_group ? (
     local.create_sg_in_databricks_account ? [aws_security_group.databricks_in_databricks_account[0].id] : [aws_security_group.databricks[0].id]
   ) : var.security_group_ids
-  subnet_ids = var.subnet_ids
-  vpc_id     = var.vpc_id
+  subnet_ids = local.effective_subnet_ids
+  vpc_id     = local.effective_vpc_id
 }
 
 resource "databricks_metastore_assignment" "this" {
   depends_on = [
-    databricks_mws_workspaces.this
+    databricks_mws_workspaces.this,
+    time_sleep.wait_for_workspace_ready,
   ]
   provider     = databricks.workspace
   workspace_id = databricks_mws_workspaces.this.workspace_id
@@ -128,7 +129,24 @@ resource "databricks_metastore_assignment" "this" {
   #default_catalog_name = "main"
 }
 
+# Databricks accounts API returns the workspace as RUNNING before the workspace
+# control plane is fully queryable (workspace-scoped GET endpoints return
+# RESOURCE_DOES_NOT_EXIST for ~30-90s after creation). Gate workspace-scoped
+# resources on this wait to eliminate the first-apply race.
+resource "time_sleep" "wait_for_workspace_ready" {
+  depends_on      = [databricks_mws_workspaces.this]
+  create_duration = "30s"
+
+  triggers = {
+    workspace_id = databricks_mws_workspaces.this.workspace_id
+  }
+}
+
 resource "databricks_enhanced_security_monitoring_workspace_setting" "this" {
+  depends_on = [
+    databricks_mws_workspaces.this,
+    time_sleep.wait_for_workspace_ready,
+  ]
   provider = databricks.workspace
   enhanced_security_monitoring_workspace {
     # This directly toggles the workspace setting on/off
@@ -137,6 +155,10 @@ resource "databricks_enhanced_security_monitoring_workspace_setting" "this" {
 }
 
 resource "databricks_restrict_workspace_admins_setting" "restrict_admins" {
+  depends_on = [
+    databricks_mws_workspaces.this,
+    time_sleep.wait_for_workspace_ready,
+  ]
   provider = databricks.workspace
   restrict_workspace_admins {
     status = "RESTRICT_TOKENS_AND_JOB_RUN_AS"
@@ -151,6 +173,11 @@ locals {
 
 resource "databricks_workspace_conf" "git_allowlist_config" {
   provider = databricks.workspace
+  depends_on = [
+    databricks_mws_workspaces.this,
+    time_sleep.wait_for_workspace_ready,
+    databricks_metastore_assignment.this,
+  ]
   custom_config = {
     "enableProjectsAllowList"              = "true"
     "projectsAllowList"                    = join(",", local.repo_urls)
@@ -162,18 +189,46 @@ resource "databricks_workspace_conf" "git_allowlist_config" {
     "mlflowRunArtifactDownloadEnabled"     = "false"
     "enableNotebookTableClipboard"         = "false"
     "enableFileStoreEndpoint"              = "false"
-    "enableIpAccessLists"                  = "false"
+    "enableIpAccessLists"                  = tostring(var.enable_ip_access_lists)
     "maxTokenLifetimeDays"                 = "90"
   }
 }
 
-# resource "databricks_ip_access_list" "allowed_ip_list" {
-#   provider     = databricks.workspace
-#   label        = "Network Allow List"
-#   list_type    = "ALLOW"
-#   ip_addresses = var.allowed_ip_addresses
-#   depends_on   = [databricks_workspace_conf.git_allowlist_config]
-# }
+resource "databricks_workspace_setting_v2" "partner_ai_features" {
+  provider = databricks.workspace
+  depends_on = [
+    databricks_mws_workspaces.this,
+    time_sleep.wait_for_workspace_ready,
+  ]
+
+  name = "llm_proxy_partner_powered"
+  boolean_val = {
+    value = var.enable_genie_space
+  }
+}
+
+resource "databricks_workspace_setting_v2" "sandbox_preview" {
+  count    = var.enable_databricks_sandbox && trimspace(var.databricks_sandbox_setting_name) != "" ? 1 : 0
+  provider = databricks.workspace
+  depends_on = [
+    databricks_mws_workspaces.this,
+    time_sleep.wait_for_workspace_ready,
+  ]
+
+  # Set this to the exact preview setting ID exposed by your workspace metadata.
+  name = var.databricks_sandbox_setting_name
+  boolean_val = {
+    value = var.enable_databricks_sandbox
+  }
+}
+
+resource "databricks_ip_access_list" "allowed_ip_list" {
+  provider     = databricks.workspace
+  label        = "Network Allow List"
+  list_type    = "ALLOW"
+  ip_addresses = var.allowed_ip_addresses
+  depends_on   = [databricks_workspace_conf.git_allowlist_config]
+}
 
 # mwa_Credentials.tf
 
@@ -215,7 +270,7 @@ resource "databricks_mws_workspaces" "this" {
   storage_configuration_id = databricks_mws_storage_configurations.this.storage_configuration_id
   network_id               = databricks_mws_networks.this.network_id
 
-  custom_tags              = local.effective_tags
+  custom_tags = local.effective_tags
 
   lifecycle {
     ignore_changes = [

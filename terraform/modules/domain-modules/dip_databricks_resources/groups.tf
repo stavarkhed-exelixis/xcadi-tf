@@ -1,5 +1,5 @@
 locals {
-  workspace_groups = {
+  fixed_workspace_groups = {
     devops_admins = {
       display_name         = trimspace(var.devops_admins_name)
       workspace_permission = ["ADMIN"]
@@ -36,6 +36,23 @@ locals {
       }
     }
   }
+
+  # Extra groups (beyond the standard admin/developer/consumer groups) granted
+  # workspace access plus CAN_RESTART on the cluster and CAN_USE on the SQL warehouse.
+  custom_groups_map = {
+    for name in var.custom_groups : trimspace(name) => {
+      display_name         = trimspace(name)
+      workspace_permission = ["USER"]
+      entitlements = {
+        allow_cluster_create       = false
+        allow_instance_pool_create = false
+        databricks_sql_access      = true
+        workspace_access           = true
+      }
+    } if trimspace(name) != ""
+  }
+
+  workspace_groups = merge(local.fixed_workspace_groups, local.custom_groups_map)
 
   groups_with_entitlements = {
     for k, v in local.workspace_groups : k => v if v.entitlements != null
